@@ -22,19 +22,19 @@ const MUSCLE_TAXONOMY = {
 };
 
 const GROUP_COLORS = {
-  Chest: "#fb923c",
-  Back: "#38bdf8",
-  Shoulders: "#a78bfa",
-  Arms: "#f472b6",
-  Legs: "#34d399",
-  Core: "#facc15",
+  Chest: "#ea580c",
+  Back: "#0284c7",
+  Shoulders: "#7c3aed",
+  Arms: "#db2777",
+  Legs: "#059669",
+  Core: "#ca8a04",
 };
 
 const TABS = [
-  { id: "workouts", label: "Workouts", icon: Dumbbell, accent: "#34d399" },
-  { id: "progress", label: "Progress", icon: TrendingUp, accent: "#38bdf8" },
-  { id: "cardio", label: "Cardio", icon: Mountain, accent: "#fb7185" },
-  { id: "food", label: "Food", icon: UtensilsCrossed, accent: "#fbbf24" },
+  { id: "workouts", label: "Workouts", icon: Dumbbell, accent: "#059669" },
+  { id: "progress", label: "Progress", icon: TrendingUp, accent: "#0284c7" },
+  { id: "cardio", label: "Cardio", icon: Mountain, accent: "#e11d48" },
+  { id: "food", label: "Food", icon: UtensilsCrossed, accent: "#d97706" },
 ];
 
 const todayStr = () => new Date().toISOString().slice(0, 10);
@@ -122,19 +122,19 @@ export default function WorkoutFoodApp() {
     cardioLog: (v) => persistAndSave(setCardioLog, "cardio-log", v),
   };
 
-  const activeAccent = TABS.find((t) => t.id === activeTab)?.accent || "#34d399";
+  const activeAccent = TABS.find((t) => t.id === activeTab)?.accent || "#059669";
 
   if (!ready) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-        <Loader2 className="animate-spin text-emerald-400" size={32} />
+      <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
+        <Loader2 className="animate-spin text-emerald-600" size={32} />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col max-w-md mx-auto relative">
-      <header className="px-4 pt-5 pb-3 sticky top-0 bg-zinc-950/95 backdrop-blur z-20 border-b border-zinc-900">
+    <div className="min-h-screen bg-neutral-50 text-neutral-900 flex flex-col max-w-md mx-auto relative">
+      <header className="px-4 pt-5 pb-3 sticky top-0 bg-neutral-50/95 backdrop-blur z-20 border-b border-neutral-200">
         <div className="flex items-center justify-between">
           <h1 className="text-lg font-bold tracking-tight" style={{ color: activeAccent }}>
             {TABS.find((t) => t.id === activeTab)?.label}
@@ -142,13 +142,13 @@ export default function WorkoutFoodApp() {
           <div className="flex gap-1.5">
             <button
               onClick={() => setLoadAttempt((n) => n + 1)}
-              className="text-[11px] text-zinc-500 border border-zinc-800 rounded-full px-2.5 py-1 active:text-zinc-300"
+              className="text-[11px] text-neutral-400 border border-neutral-200 rounded-full px-2.5 py-1 active:text-neutral-700"
             >
               Reload
             </button>
             <button
               onClick={() => exportBackup({ exercises, sessions, foodLog, targets, cardioLog })}
-              className="text-[11px] text-zinc-500 border border-zinc-800 rounded-full px-2.5 py-1 active:text-zinc-300"
+              className="text-[11px] text-neutral-400 border border-neutral-200 rounded-full px-2.5 py-1 active:text-neutral-700"
             >
               Backup
             </button>
@@ -156,12 +156,12 @@ export default function WorkoutFoodApp() {
           </div>
         </div>
         {loadFailed && (
-          <p className="text-xs text-amber-400 mt-2">
+          <p className="text-xs text-amber-600 mt-2">
             Some data may not have loaded — this may not be everything you've saved. Try Reload above before adding anything new.
           </p>
         )}
         {saveError && (
-          <p className="text-xs text-red-400 mt-2">
+          <p className="text-xs text-red-600 mt-2">
             Your last change didn't save. Check your connection, then use Backup above to save a copy just in case.
           </p>
         )}
@@ -178,7 +178,7 @@ export default function WorkoutFoodApp() {
         )}
       </main>
 
-      <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-zinc-900 border-t border-zinc-800 flex z-30">
+      <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t border-neutral-200 flex z-30">
         {TABS.map((t) => {
           const Icon = t.icon;
           const active = activeTab === t.id;
@@ -188,8 +188,8 @@ export default function WorkoutFoodApp() {
               onClick={() => setActiveTab(t.id)}
               className="flex-1 flex flex-col items-center gap-1 py-2.5 active:opacity-70"
             >
-              <Icon size={22} color={active ? t.accent : "#71717a"} strokeWidth={active ? 2.5 : 2} />
-              <span className="text-[11px] font-medium" style={{ color: active ? t.accent : "#71717a" }}>
+              <Icon size={22} color={active ? t.accent : "#9ca3af"} strokeWidth={active ? 2.5 : 2} />
+              <span className="text-[11px] font-medium" style={{ color: active ? t.accent : "#9ca3af" }}>
                 {t.label}
               </span>
             </button>
@@ -305,9 +305,9 @@ function WorkoutsTab({ exercises, setExercises, sessions, setSessions }) {
     return (
       <div className="space-y-3">
         {draftRestored && (
-          <div className="bg-emerald-400/10 border border-emerald-400/30 rounded-xl px-3.5 py-2.5 flex items-center justify-between">
-            <p className="text-xs text-emerald-400">Picked up where you left off — this workout was autosaved.</p>
-            <button onClick={() => setDraftRestored(false)} className="text-emerald-400 p-1"><X size={14} /></button>
+          <div className="bg-emerald-600/10 border border-emerald-600/30 rounded-xl px-3.5 py-2.5 flex items-center justify-between">
+            <p className="text-xs text-emerald-600">Picked up where you left off — this workout was autosaved.</p>
+            <button onClick={() => setDraftRestored(false)} className="text-emerald-600 p-1"><X size={14} /></button>
           </div>
         )}
         <SessionEditor
@@ -328,13 +328,13 @@ function WorkoutsTab({ exercises, setExercises, sessions, setSessions }) {
       <div className="flex gap-2">
         <button
           onClick={startNew}
-          className="flex-1 py-3.5 rounded-2xl bg-emerald-400 text-zinc-950 font-semibold flex items-center justify-center gap-2 active:scale-[0.98] transition"
+          className="flex-1 py-3.5 rounded-2xl bg-emerald-600 text-white font-semibold flex items-center justify-center gap-2 active:scale-[0.98] transition"
         >
           <Plus size={20} strokeWidth={2.5} /> New Workout
         </button>
         <button
           onClick={() => importInputRef.current?.click()}
-          className="px-4 rounded-2xl bg-zinc-900 border border-zinc-800 text-zinc-300 font-medium text-sm active:scale-[0.98] transition"
+          className="px-4 rounded-2xl bg-white border border-neutral-200 text-neutral-700 font-medium text-sm active:scale-[0.98] transition"
         >
           Import
         </button>
@@ -342,22 +342,22 @@ function WorkoutsTab({ exercises, setExercises, sessions, setSessions }) {
       </div>
 
       {sessions.length > 0 && !confirmClearAll && (
-        <button onClick={() => setConfirmClearAll(true)} className="text-xs text-zinc-600 active:text-red-400">
+        <button onClick={() => setConfirmClearAll(true)} className="text-xs text-neutral-400 active:text-red-600">
           Clear all workouts
         </button>
       )}
       {confirmClearAll && (
-        <div className="bg-zinc-900 border border-red-500/30 rounded-xl p-3.5 space-y-2.5">
-          <p className="text-sm text-zinc-200">
+        <div className="bg-white border border-red-500/30 rounded-xl p-3.5 space-y-2.5">
+          <p className="text-sm text-neutral-800">
             Delete all {sessions.length} workout sessions? Your exercise library stays intact — only history is removed. This can't be undone.
           </p>
           <div className="flex gap-2">
-            <button onClick={() => setConfirmClearAll(false)} className="flex-1 py-2.5 rounded-lg bg-zinc-800 text-zinc-300 text-sm font-medium">
+            <button onClick={() => setConfirmClearAll(false)} className="flex-1 py-2.5 rounded-lg bg-neutral-100 text-neutral-700 text-sm font-medium">
               Cancel
             </button>
             <button
               onClick={() => { setSessions([]); setConfirmClearAll(false); }}
-              className="flex-1 py-2.5 rounded-lg bg-red-500/20 text-red-400 text-sm font-semibold"
+              className="flex-1 py-2.5 rounded-lg bg-red-500/20 text-red-600 text-sm font-semibold"
             >
               Delete All
             </button>
@@ -365,20 +365,20 @@ function WorkoutsTab({ exercises, setExercises, sessions, setSessions }) {
         </div>
       )}
 
-      {importError && <p className="text-xs text-red-400">{importError}</p>}
+      {importError && <p className="text-xs text-red-600">{importError}</p>}
 
       {importFile && (
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-3.5 space-y-2.5">
-          <p className="font-medium text-sm text-zinc-100">Import Preview</p>
-          <p className="text-xs text-zinc-400">
+        <div className="bg-white border border-neutral-200 rounded-xl p-3.5 space-y-2.5">
+          <p className="font-medium text-sm text-neutral-900">Import Preview</p>
+          <p className="text-xs text-neutral-500">
             {importFile.exercises.length} exercises · {importFile.sessions.length} workout sessions found in this file.
           </p>
-          <p className="text-xs text-zinc-500">Anything already in your library or history (matched by id) will be skipped, so it's safe to import the same file twice.</p>
+          <p className="text-xs text-neutral-400">Anything already in your library or history (matched by id) will be skipped, so it's safe to import the same file twice.</p>
           <div className="flex gap-2 pt-1">
-            <button onClick={() => setImportFile(null)} className="flex-1 py-2.5 rounded-lg bg-zinc-800 text-zinc-300 text-sm font-medium">
+            <button onClick={() => setImportFile(null)} className="flex-1 py-2.5 rounded-lg bg-neutral-100 text-neutral-700 text-sm font-medium">
               Cancel
             </button>
-            <button onClick={confirmImport} className="flex-1 py-2.5 rounded-lg bg-emerald-400 text-zinc-950 text-sm font-semibold">
+            <button onClick={confirmImport} className="flex-1 py-2.5 rounded-lg bg-emerald-600 text-white text-sm font-semibold">
               Import
             </button>
           </div>
@@ -386,34 +386,34 @@ function WorkoutsTab({ exercises, setExercises, sessions, setSessions }) {
       )}
 
       {sessions.length === 0 && (
-        <p className="text-zinc-500 text-sm text-center pt-10">No workouts logged yet. Start one above.</p>
+        <p className="text-neutral-400 text-sm text-center pt-10">No workouts logged yet. Start one above.</p>
       )}
 
       {dates.map((date) => (
         <div key={date}>
-          <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-2">{fmtDate(date)}</p>
+          <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wide mb-2">{fmtDate(date)}</p>
           <div className="space-y-2">
             {grouped[date].map((s) => {
               const isOpen = expandedId === s.id;
               const totalSets = s.exercises.reduce((a, e) => a + e.sets.length, 0);
               return (
-                <div key={s.id} className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+                <div key={s.id} className="bg-white border border-neutral-200 rounded-xl overflow-hidden">
                   <button
                     onClick={() => setExpandedId(isOpen ? null : s.id)}
                     className="w-full px-4 py-3 flex items-center justify-between text-left"
                   >
                     <div>
-                      <p className="font-medium text-zinc-100">{s.name || "Workout"}</p>
-                      <p className="text-xs text-zinc-500">{s.exercises.length} exercises · {totalSets} sets</p>
+                      <p className="font-medium text-neutral-900">{s.name || "Workout"}</p>
+                      <p className="text-xs text-neutral-400">{s.exercises.length} exercises · {totalSets} sets</p>
                     </div>
-                    {isOpen ? <ChevronUp size={18} className="text-zinc-500" /> : <ChevronDown size={18} className="text-zinc-500" />}
+                    {isOpen ? <ChevronUp size={18} className="text-neutral-400" /> : <ChevronDown size={18} className="text-neutral-400" />}
                   </button>
                   {isOpen && (
-                    <div className="px-4 pb-4 border-t border-zinc-800 pt-3 space-y-3">
+                    <div className="px-4 pb-4 border-t border-neutral-200 pt-3 space-y-3">
                       {s.exercises.map((ex, i) => (
                         <div key={i}>
-                          <p className="text-sm font-medium text-zinc-200">{ex.exerciseName}</p>
-                          <p className="text-xs text-zinc-500">
+                          <p className="text-sm font-medium text-neutral-800">{ex.exerciseName}</p>
+                          <p className="text-xs text-neutral-400">
                             {ex.sets.map((st, j) => `${st.weight}×${st.reps}`).join(", ")}
                           </p>
                         </div>
@@ -421,21 +421,21 @@ function WorkoutsTab({ exercises, setExercises, sessions, setSessions }) {
                       <div className="flex gap-2 pt-1">
                         <button
                           onClick={() => startEdit(s)}
-                          className="flex-1 py-2 rounded-lg bg-zinc-800 text-zinc-200 text-sm font-medium flex items-center justify-center gap-1.5"
+                          className="flex-1 py-2 rounded-lg bg-neutral-100 text-neutral-800 text-sm font-medium flex items-center justify-center gap-1.5"
                         >
                           <Pencil size={14} /> Edit
                         </button>
                         {confirmDeleteId === s.id ? (
                           <button
                             onClick={() => deleteSession(s.id)}
-                            className="flex-1 py-2 rounded-lg bg-red-500/20 text-red-400 text-sm font-medium"
+                            className="flex-1 py-2 rounded-lg bg-red-500/20 text-red-600 text-sm font-medium"
                           >
                             Confirm delete
                           </button>
                         ) : (
                           <button
                             onClick={() => setConfirmDeleteId(s.id)}
-                            className="flex-1 py-2 rounded-lg bg-zinc-800 text-red-400 text-sm font-medium flex items-center justify-center gap-1.5"
+                            className="flex-1 py-2 rounded-lg bg-neutral-100 text-red-600 text-sm font-medium flex items-center justify-center gap-1.5"
                           >
                             <Trash2 size={14} /> Delete
                           </button>
@@ -494,55 +494,55 @@ function SessionEditor({ draft, setDraft, exercises, setExercises, onCancel, onS
           value={draft.name}
           onChange={(e) => setDraft({ ...draft, name: e.target.value })}
           placeholder="Workout name (optional)"
-          className="flex-1 bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2.5 text-sm placeholder-zinc-600 outline-none focus:border-emerald-400"
+          className="flex-1 bg-white border border-neutral-200 rounded-xl px-3 py-2.5 text-sm placeholder-neutral-400 outline-none focus:border-emerald-600"
         />
         <input
           type="date"
           value={draft.date}
           onChange={(e) => setDraft({ ...draft, date: e.target.value })}
-          className="bg-zinc-900 border border-zinc-800 rounded-xl px-2 py-2.5 text-sm text-zinc-300 outline-none focus:border-emerald-400"
+          className="bg-white border border-neutral-200 rounded-xl px-2 py-2.5 text-sm text-neutral-700 outline-none focus:border-emerald-600"
         />
       </div>
 
       {draft.exercises.map((ex, exIdx) => (
-        <div key={exIdx} className="bg-zinc-900 border border-zinc-800 rounded-xl p-3.5">
+        <div key={exIdx} className="bg-white border border-neutral-200 rounded-xl p-3.5">
           <div className="flex items-center justify-between mb-2.5">
-            <p className="font-medium text-zinc-100">{ex.exerciseName}</p>
-            <button onClick={() => removeExercise(exIdx)} className="p-1 text-zinc-500 active:text-red-400">
+            <p className="font-medium text-neutral-900">{ex.exerciseName}</p>
+            <button onClick={() => removeExercise(exIdx)} className="p-1 text-neutral-400 active:text-red-600">
               <X size={18} />
             </button>
           </div>
           <div className="grid grid-cols-[1fr_1fr_1fr_auto] gap-2 mb-1.5 px-1">
-            <span className="text-[11px] text-zinc-500 uppercase">Set</span>
-            <span className="text-[11px] text-zinc-500 uppercase">Lbs</span>
-            <span className="text-[11px] text-zinc-500 uppercase">Reps</span>
+            <span className="text-[11px] text-neutral-400 uppercase">Set</span>
+            <span className="text-[11px] text-neutral-400 uppercase">Lbs</span>
+            <span className="text-[11px] text-neutral-400 uppercase">Reps</span>
             <span></span>
           </div>
           {ex.sets.map((st, setIdx) => (
             <div key={setIdx} className="grid grid-cols-[1fr_1fr_1fr_auto] gap-2 mb-2 items-center">
-              <span className="text-sm text-zinc-400 pl-1">{setIdx + 1}</span>
+              <span className="text-sm text-neutral-500 pl-1">{setIdx + 1}</span>
               <input
                 type="number"
                 inputMode="decimal"
                 value={st.weight}
                 onChange={(e) => updateSet(exIdx, setIdx, "weight", e.target.value)}
-                className="bg-zinc-800 rounded-lg px-2 py-2.5 text-center text-base outline-none focus:ring-1 focus:ring-emerald-400"
+                className="bg-neutral-100 rounded-lg px-2 py-2.5 text-center text-base outline-none focus:ring-1 focus:ring-emerald-600"
               />
               <input
                 type="number"
                 inputMode="numeric"
                 value={st.reps}
                 onChange={(e) => updateSet(exIdx, setIdx, "reps", e.target.value)}
-                className="bg-zinc-800 rounded-lg px-2 py-2.5 text-center text-base outline-none focus:ring-1 focus:ring-emerald-400"
+                className="bg-neutral-100 rounded-lg px-2 py-2.5 text-center text-base outline-none focus:ring-1 focus:ring-emerald-600"
               />
-              <button onClick={() => removeSet(exIdx, setIdx)} className="p-2 text-zinc-600 active:text-red-400">
+              <button onClick={() => removeSet(exIdx, setIdx)} className="p-2 text-neutral-400 active:text-red-600">
                 <X size={16} />
               </button>
             </div>
           ))}
           <button
             onClick={() => addSet(exIdx)}
-            className="w-full mt-1 py-2 rounded-lg bg-zinc-800 text-emerald-400 text-sm font-medium flex items-center justify-center gap-1.5"
+            className="w-full mt-1 py-2 rounded-lg bg-neutral-100 text-emerald-600 text-sm font-medium flex items-center justify-center gap-1.5"
           >
             <Plus size={15} /> Add Set
           </button>
@@ -552,7 +552,7 @@ function SessionEditor({ draft, setDraft, exercises, setExercises, onCancel, onS
       {!pickerOpen ? (
         <button
           onClick={() => setPickerOpen(true)}
-          className="w-full py-3 rounded-xl border-2 border-dashed border-zinc-700 text-zinc-400 font-medium flex items-center justify-center gap-2 active:bg-zinc-900"
+          className="w-full py-3 rounded-xl border-2 border-dashed border-neutral-300 text-neutral-500 font-medium flex items-center justify-center gap-2 active:bg-white"
         >
           <Plus size={18} /> Add Exercise
         </button>
@@ -566,12 +566,12 @@ function SessionEditor({ draft, setDraft, exercises, setExercises, onCancel, onS
       )}
 
       <div className="flex gap-2 pt-2">
-        <button onClick={onCancel} className="flex-1 py-3 rounded-xl bg-zinc-800 text-zinc-300 font-medium">
+        <button onClick={onCancel} className="flex-1 py-3 rounded-xl bg-neutral-100 text-neutral-700 font-medium">
           Cancel
         </button>
         <button
           onClick={onSave}
-          className="flex-1 py-3 rounded-xl bg-emerald-400 text-zinc-950 font-semibold flex items-center justify-center gap-1.5"
+          className="flex-1 py-3 rounded-xl bg-emerald-600 text-white font-semibold flex items-center justify-center gap-1.5"
         >
           <Check size={18} /> {isEditing ? "Save Changes" : "Finish Workout"}
         </button>
@@ -664,13 +664,13 @@ function ExercisePicker({ exercises, setExercises, onPick, onClose }) {
 
   if (pendingMuscles) {
     return (
-      <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-3.5 space-y-3">
-        <p className="font-medium text-zinc-100">"{displayName(pendingMuscles.baseName, pendingMuscles.equipment)}" targets:</p>
-        <p className="text-xs text-zinc-500">Muscle tags are saved against "{pendingMuscles.baseName}" — every brand/equipment variant of this movement will share them.</p>
+      <div className="bg-white border border-neutral-200 rounded-xl p-3.5 space-y-3">
+        <p className="font-medium text-neutral-900">"{displayName(pendingMuscles.baseName, pendingMuscles.equipment)}" targets:</p>
+        <p className="text-xs text-neutral-400">Muscle tags are saved against "{pendingMuscles.baseName}" — every brand/equipment variant of this movement will share them.</p>
         <div className="space-y-2">
           {Object.entries(MUSCLE_TAXONOMY).map(([group, regions]) => (
             <div key={group}>
-              <p className="text-[11px] text-zinc-500 uppercase mb-1">{group}</p>
+              <p className="text-[11px] text-neutral-400 uppercase mb-1">{group}</p>
               <div className="flex flex-wrap gap-1.5">
                 {regions.map((region) => {
                   const active = pendingMuscles.muscles.some((m) => m.group === group && m.region === region);
@@ -682,7 +682,7 @@ function ExercisePicker({ exercises, setExercises, onPick, onClose }) {
                       style={
                         active
                           ? { backgroundColor: GROUP_COLORS[group] + "33", borderColor: GROUP_COLORS[group], color: GROUP_COLORS[group] }
-                          : { borderColor: "#3f3f46", color: "#a1a1aa" }
+                          : { borderColor: "#d1d5db", color: "#6b7280" }
                       }
                     >
                       {region}
@@ -694,10 +694,10 @@ function ExercisePicker({ exercises, setExercises, onPick, onClose }) {
           ))}
         </div>
         <div className="flex gap-2 pt-1">
-          <button onClick={() => setPendingMuscles(null)} className="flex-1 py-2.5 rounded-lg bg-zinc-800 text-zinc-300 text-sm font-medium">
+          <button onClick={() => setPendingMuscles(null)} className="flex-1 py-2.5 rounded-lg bg-neutral-100 text-neutral-700 text-sm font-medium">
             Back
           </button>
-          <button onClick={confirmNewExercise} className="flex-1 py-2.5 rounded-lg bg-emerald-400 text-zinc-950 text-sm font-semibold">
+          <button onClick={confirmNewExercise} className="flex-1 py-2.5 rounded-lg bg-emerald-600 text-white text-sm font-semibold">
             Add Exercise
           </button>
         </div>
@@ -707,39 +707,39 @@ function ExercisePicker({ exercises, setExercises, onPick, onClose }) {
 
   if (showForm) {
     return (
-      <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-3.5 space-y-2.5">
+      <div className="bg-white border border-neutral-200 rounded-xl p-3.5 space-y-2.5">
         <div className="flex items-center justify-between">
-          <p className="font-medium text-zinc-100 text-sm">New Exercise</p>
-          <button onClick={() => setShowForm(false)} className="p-1 text-zinc-500"><X size={18} /></button>
+          <p className="font-medium text-neutral-900 text-sm">New Exercise</p>
+          <button onClick={() => setShowForm(false)} className="p-1 text-neutral-400"><X size={18} /></button>
         </div>
         <div>
-          <p className="text-[11px] text-zinc-500 mb-1">Movement name</p>
+          <p className="text-[11px] text-neutral-400 mb-1">Movement name</p>
           <input
             autoFocus
             value={newBase}
             onChange={(e) => setNewBase(e.target.value)}
             placeholder="e.g. Chest Press"
-            className="w-full bg-zinc-800 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-1 focus:ring-emerald-400"
+            className="w-full bg-neutral-100 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-1 focus:ring-emerald-600"
           />
         </div>
         <div>
-          <p className="text-[11px] text-zinc-500 mb-1">Equipment / brand (optional)</p>
+          <p className="text-[11px] text-neutral-400 mb-1">Equipment / brand (optional)</p>
           <input
             value={newEquipment}
             onChange={(e) => setNewEquipment(e.target.value)}
             placeholder="e.g. Hammer Strength"
-            className="w-full bg-zinc-800 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-1 focus:ring-emerald-400"
+            className="w-full bg-neutral-100 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-1 focus:ring-emerald-600"
           />
         </div>
-        {newBase.trim() && <p className="text-xs text-zinc-500">Will be added as "{proposedName}"</p>}
+        {newBase.trim() && <p className="text-xs text-neutral-400">Will be added as "{proposedName}"</p>}
         {matchingBase && !exactVariantExists && (
-          <p className="text-xs text-sky-400">Reusing muscle tags from "{matchingBase.baseName || getBaseName(matchingBase)}".</p>
+          <p className="text-xs text-sky-600">Reusing muscle tags from "{matchingBase.baseName || getBaseName(matchingBase)}".</p>
         )}
-        {exactVariantExists && <p className="text-xs text-zinc-500">This exact variant already exists — tapping Add will just use it.</p>}
+        {exactVariantExists && <p className="text-xs text-neutral-400">This exact variant already exists — tapping Add will just use it.</p>}
         <button
           onClick={handleAddNew}
           disabled={!newBase.trim()}
-          className="w-full py-2.5 rounded-lg bg-emerald-400 text-zinc-950 text-sm font-semibold flex items-center justify-center gap-1.5 disabled:opacity-40"
+          className="w-full py-2.5 rounded-lg bg-emerald-600 text-white text-sm font-semibold flex items-center justify-center gap-1.5 disabled:opacity-40"
         >
           <Plus size={15} /> Add Exercise
         </button>
@@ -748,16 +748,16 @@ function ExercisePicker({ exercises, setExercises, onPick, onClose }) {
   }
 
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-3.5 space-y-2.5">
+    <div className="bg-white border border-neutral-200 rounded-xl p-3.5 space-y-2.5">
       <div className="flex items-center gap-2">
         <input
           autoFocus
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search exercises"
-          className="flex-1 bg-zinc-800 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-1 focus:ring-emerald-400"
+          className="flex-1 bg-neutral-100 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-1 focus:ring-emerald-600"
         />
-        <button onClick={onClose} className="p-2 text-zinc-500">
+        <button onClick={onClose} className="p-2 text-neutral-400">
           <X size={18} />
         </button>
       </div>
@@ -766,18 +766,18 @@ function ExercisePicker({ exercises, setExercises, onPick, onClose }) {
           <button
             key={e.id}
             onClick={() => onPick(e)}
-            className="w-full text-left px-3 py-2.5 rounded-lg bg-zinc-800 active:bg-zinc-700 text-sm"
+            className="w-full text-left px-3 py-2.5 rounded-lg bg-neutral-100 active:bg-neutral-200 text-sm"
           >
             {e.name}
             {e.muscles?.length > 0 && (
-              <span className="text-zinc-500 text-xs"> · {e.muscles.map((m) => m.region).join(", ")}</span>
+              <span className="text-neutral-400 text-xs"> · {e.muscles.map((m) => m.region).join(", ")}</span>
             )}
           </button>
         ))}
       </div>
       <button
         onClick={openForm}
-        className="w-full py-2.5 rounded-lg border border-dashed border-emerald-400/50 text-emerald-400 text-sm font-medium flex items-center justify-center gap-1.5"
+        className="w-full py-2.5 rounded-lg border border-dashed border-emerald-600/50 text-emerald-600 text-sm font-medium flex items-center justify-center gap-1.5"
       >
         <Plus size={15} /> New Exercise
       </button>
@@ -808,7 +808,7 @@ function ProgressTab({ exercises, sessions }) {
   }, [selectedBase]);
 
   if (loggedExercises.length === 0) {
-    return <p className="text-zinc-500 text-sm text-center pt-10">Log a workout to start seeing progress.</p>;
+    return <p className="text-neutral-400 text-sm text-center pt-10">Log a workout to start seeing progress.</p>;
   }
 
   const variants = loggedExercises.filter((e) => getBaseName(e) === selectedBase);
@@ -845,7 +845,7 @@ function ProgressTab({ exercises, sessions }) {
       <select
         value={selectedBase}
         onChange={(e) => setSelectedBase(e.target.value)}
-        className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2.5 text-sm outline-none"
+        className="w-full bg-white border border-neutral-200 rounded-xl px-3 py-2.5 text-sm outline-none"
       >
         {movementNames.map((n) => (
           <option key={n} value={n}>{n}</option>
@@ -859,8 +859,8 @@ function ProgressTab({ exercises, sessions }) {
             className="shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border"
             style={
               selectedVariant === "all"
-                ? { backgroundColor: "#38bdf833", borderColor: "#38bdf8", color: "#38bdf8" }
-                : { borderColor: "#3f3f46", color: "#a1a1aa" }
+                ? { backgroundColor: "#0284c733", borderColor: "#0284c7", color: "#0284c7" }
+                : { borderColor: "#d1d5db", color: "#6b7280" }
             }
           >
             All equipment (combined)
@@ -872,8 +872,8 @@ function ProgressTab({ exercises, sessions }) {
               className="shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border"
               style={
                 selectedVariant === v.id
-                  ? { backgroundColor: "#38bdf833", borderColor: "#38bdf8", color: "#38bdf8" }
-                  : { borderColor: "#3f3f46", color: "#a1a1aa" }
+                  ? { backgroundColor: "#0284c733", borderColor: "#0284c7", color: "#0284c7" }
+                  : { borderColor: "#d1d5db", color: "#6b7280" }
               }
             >
               {getEquipment(v) || v.name}
@@ -887,7 +887,7 @@ function ProgressTab({ exercises, sessions }) {
           <button
             key={m.id}
             onClick={() => setMetric(m.id)}
-            className={`flex-1 py-2 rounded-lg text-sm font-medium border ${metric === m.id ? "bg-sky-400 text-zinc-950 border-sky-400" : "bg-zinc-900 border-zinc-800 text-zinc-400"}`}
+            className={`flex-1 py-2 rounded-lg text-sm font-medium border ${metric === m.id ? "bg-sky-600 text-white border-sky-600" : "bg-white border-neutral-200 text-neutral-500"}`}
           >
             {m.label}
           </button>
@@ -897,17 +897,17 @@ function ProgressTab({ exercises, sessions }) {
       <div className="grid grid-cols-3 gap-2">
         <StatCard label="Best" value={`${best}`} sub="lbs" />
         <StatCard label="Latest" value={`${last?.topWeight ?? "-"}`} sub="lbs" />
-        <StatCard label="Trend" value={`${trend >= 0 ? "+" : ""}${trend}`} sub="lbs" color={trend > 0 ? "#34d399" : trend < 0 ? "#f87171" : "#a1a1aa"} />
+        <StatCard label="Trend" value={`${trend >= 0 ? "+" : ""}${trend}`} sub="lbs" color={trend > 0 ? "#059669" : trend < 0 ? "#dc2626" : "#6b7280"} />
       </div>
 
-      <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-3 h-64">
+      <div className="bg-white border border-neutral-200 rounded-xl p-3 h-64">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={points} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-            <CartesianGrid stroke="#27272a" strokeDasharray="3 3" />
-            <XAxis dataKey="label" tick={{ fill: "#71717a", fontSize: 10 }} />
-            <YAxis tick={{ fill: "#71717a", fontSize: 10 }} />
-            <Tooltip contentStyle={{ background: "#18181b", border: "1px solid #3f3f46", borderRadius: 8, fontSize: 12 }} />
-            <Line type="monotone" dataKey={metric === "weight" ? "topWeight" : "volume"} stroke="#38bdf8" strokeWidth={2.5} dot={{ r: 3, fill: "#38bdf8" }} />
+            <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
+            <XAxis dataKey="label" tick={{ fill: "#9ca3af", fontSize: 10 }} />
+            <YAxis tick={{ fill: "#9ca3af", fontSize: 10 }} />
+            <Tooltip contentStyle={{ background: "#ffffff", border: "1px solid #d1d5db", borderRadius: 8, fontSize: 12 }} />
+            <Line type="monotone" dataKey={metric === "weight" ? "topWeight" : "volume"} stroke="#0284c7" strokeWidth={2.5} dot={{ r: 3, fill: "#0284c7" }} />
           </LineChart>
         </ResponsiveContainer>
       </div>
@@ -917,10 +917,10 @@ function ProgressTab({ exercises, sessions }) {
 
 function StatCard({ label, value, sub, color }) {
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-center">
-      <p className="text-lg font-bold" style={{ color: color || "#e4e4e7" }}>{value}</p>
-      <p className="text-[10px] text-zinc-500 uppercase">{sub}</p>
-      <p className="text-[11px] text-zinc-400 mt-0.5">{label}</p>
+    <div className="bg-white border border-neutral-200 rounded-xl p-3 text-center">
+      <p className="text-lg font-bold" style={{ color: color || "#111827" }}>{value}</p>
+      <p className="text-[10px] text-neutral-400 uppercase">{sub}</p>
+      <p className="text-[11px] text-neutral-500 mt-0.5">{label}</p>
     </div>
   );
 }
@@ -959,31 +959,31 @@ function FoodTab({ foodLog, setFoodLog, targets, setTargets }) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <button onClick={() => shiftDay(-1)} className="p-2 text-zinc-400"><ChevronLeft size={20} /></button>
+        <button onClick={() => shiftDay(-1)} className="p-2 text-neutral-500"><ChevronLeft size={20} /></button>
         <p className="font-medium text-sm">{date === todayStr() ? "Today" : fmtDate(date)}</p>
-        <button onClick={() => shiftDay(1)} disabled={date === todayStr()} className="p-2 text-zinc-400 disabled:opacity-30"><ChevronRight size={20} /></button>
+        <button onClick={() => shiftDay(1)} disabled={date === todayStr()} className="p-2 text-neutral-500 disabled:opacity-30"><ChevronRight size={20} /></button>
       </div>
 
-      <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-3">
+      <div className="bg-white border border-neutral-200 rounded-xl p-4 space-y-3">
         <div className="flex items-center justify-between">
-          <p className="text-sm font-semibold text-zinc-300">Today's Targets</p>
-          <button onClick={() => setShowSettings(!showSettings)} className="p-1.5 text-zinc-500"><Settings size={16} /></button>
+          <p className="text-sm font-semibold text-neutral-700">Today's Targets</p>
+          <button onClick={() => setShowSettings(!showSettings)} className="p-1.5 text-neutral-400"><Settings size={16} /></button>
         </div>
         {showSettings ? (
           <TargetsEditor targets={targets} onSave={(t) => { setTargets(t); setShowSettings(false); }} />
         ) : (
           <>
-            <MacroBar label="Calories" value={totals.calories} target={targets.calories} color="#fbbf24" unit="kcal" />
-            <MacroBar label="Protein" value={totals.protein} target={targets.protein} color="#34d399" unit="g" />
-            <MacroBar label="Carbs" value={totals.carbs} target={targets.carbs} color="#38bdf8" unit="g" />
-            <MacroBar label="Fat" value={totals.fat} target={targets.fat} color="#f472b6" unit="g" />
+            <MacroBar label="Calories" value={totals.calories} target={targets.calories} color="#d97706" unit="kcal" />
+            <MacroBar label="Protein" value={totals.protein} target={targets.protein} color="#059669" unit="g" />
+            <MacroBar label="Carbs" value={totals.carbs} target={targets.carbs} color="#0284c7" unit="g" />
+            <MacroBar label="Fat" value={totals.fat} target={targets.fat} color="#db2777" unit="g" />
           </>
         )}
       </div>
 
       <button
         onClick={() => setShowAdd(true)}
-        className="w-full py-3.5 rounded-2xl bg-amber-400 text-zinc-950 font-semibold flex items-center justify-center gap-2 active:scale-[0.98] transition"
+        className="w-full py-3.5 rounded-2xl bg-amber-600 text-white font-semibold flex items-center justify-center gap-2 active:scale-[0.98] transition"
       >
         <Plus size={20} strokeWidth={2.5} /> Log Meal
       </button>
@@ -991,14 +991,14 @@ function FoodTab({ foodLog, setFoodLog, targets, setTargets }) {
       {showAdd && <AddMealSheet onAdd={addEntry} onClose={() => setShowAdd(false)} />}
 
       <div className="space-y-2">
-        {dayEntries.length === 0 && <p className="text-zinc-500 text-sm text-center pt-6">No meals logged for this day.</p>}
+        {dayEntries.length === 0 && <p className="text-neutral-400 text-sm text-center pt-6">No meals logged for this day.</p>}
         {dayEntries.map((e) => (
-          <div key={e.id} className="bg-zinc-900 border border-zinc-800 rounded-xl p-3.5 flex items-start justify-between">
+          <div key={e.id} className="bg-white border border-neutral-200 rounded-xl p-3.5 flex items-start justify-between">
             <div>
-              <p className="font-medium text-sm text-zinc-100">{e.name}</p>
-              <p className="text-xs text-zinc-500 mt-0.5">{e.time} · {e.calories} kcal · P{e.protein} C{e.carbs} F{e.fat}</p>
+              <p className="font-medium text-sm text-neutral-900">{e.name}</p>
+              <p className="text-xs text-neutral-400 mt-0.5">{e.time} · {e.calories} kcal · P{e.protein} C{e.carbs} F{e.fat}</p>
             </div>
-            <button onClick={() => deleteEntry(e.id)} className="p-1.5 text-zinc-600 active:text-red-400"><Trash2 size={16} /></button>
+            <button onClick={() => deleteEntry(e.id)} className="p-1.5 text-neutral-400 active:text-red-600"><Trash2 size={16} /></button>
           </div>
         ))}
       </div>
@@ -1011,10 +1011,10 @@ function MacroBar({ label, value, target, color, unit }) {
   return (
     <div>
       <div className="flex justify-between text-xs mb-1">
-        <span className="text-zinc-400">{label}</span>
-        <span className="text-zinc-300 font-medium">{Math.round(value)} / {target} {unit}</span>
+        <span className="text-neutral-500">{label}</span>
+        <span className="text-neutral-700 font-medium">{Math.round(value)} / {target} {unit}</span>
       </div>
-      <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
+      <div className="h-2 bg-neutral-100 rounded-full overflow-hidden">
         <div className="h-full rounded-full transition-all" style={{ width: pct + "%", backgroundColor: color }} />
       </div>
     </div>
@@ -1032,17 +1032,17 @@ function TargetsEditor({ targets, onSave }) {
         { key: "fat", label: "Fat (g)" },
       ].map((f) => (
         <div key={f.key} className="flex items-center justify-between">
-          <span className="text-sm text-zinc-400">{f.label}</span>
+          <span className="text-sm text-neutral-500">{f.label}</span>
           <input
             type="number"
             inputMode="numeric"
             value={t[f.key]}
             onChange={(e) => setT({ ...t, [f.key]: Number(e.target.value) })}
-            className="w-24 bg-zinc-800 rounded-lg px-2 py-1.5 text-right text-sm outline-none focus:ring-1 focus:ring-amber-400"
+            className="w-24 bg-neutral-100 rounded-lg px-2 py-1.5 text-right text-sm outline-none focus:ring-1 focus:ring-amber-600"
           />
         </div>
       ))}
-      <button onClick={() => onSave(t)} className="w-full py-2.5 rounded-lg bg-amber-400 text-zinc-950 text-sm font-semibold mt-1">
+      <button onClick={() => onSave(t)} className="w-full py-2.5 rounded-lg bg-amber-600 text-white text-sm font-semibold mt-1">
         Save Targets
       </button>
     </div>
@@ -1064,10 +1064,10 @@ function AddMealSheet({ onAdd, onClose }) {
 
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/60" onClick={onClose}>
-      <div className="bg-zinc-900 border-t border-zinc-800 rounded-t-2xl w-full max-w-md p-4 space-y-3" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white border-t border-neutral-200 rounded-t-2xl w-full max-w-md p-4 space-y-3" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <p className="font-semibold">Log Meal</p>
-          <button onClick={onClose} className="p-1 text-zinc-500"><X size={20} /></button>
+          <button onClick={onClose} className="p-1 text-neutral-400"><X size={20} /></button>
         </div>
 
         <div className="space-y-2.5">
@@ -1075,7 +1075,7 @@ function AddMealSheet({ onAdd, onClose }) {
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
             placeholder="Food name"
-            className="w-full bg-zinc-800 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-1 focus:ring-amber-400"
+            className="w-full bg-neutral-100 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-1 focus:ring-amber-600"
           />
           <div className="grid grid-cols-2 gap-2">
             <LabeledInput label="Calories" value={form.calories} onChange={(v) => setForm({ ...form, calories: v })} />
@@ -1083,7 +1083,7 @@ function AddMealSheet({ onAdd, onClose }) {
             <LabeledInput label="Carbs (g)" value={form.carbs} onChange={(v) => setForm({ ...form, carbs: v })} />
             <LabeledInput label="Fat (g)" value={form.fat} onChange={(v) => setForm({ ...form, fat: v })} />
           </div>
-          <button onClick={submit} className="w-full py-3 rounded-xl bg-amber-400 text-zinc-950 font-semibold">
+          <button onClick={submit} className="w-full py-3 rounded-xl bg-amber-600 text-white font-semibold">
             Save Meal
           </button>
         </div>
@@ -1095,13 +1095,13 @@ function AddMealSheet({ onAdd, onClose }) {
 function LabeledInput({ label, value, onChange }) {
   return (
     <div>
-      <p className="text-[11px] text-zinc-500 mb-1">{label}</p>
+      <p className="text-[11px] text-neutral-400 mb-1">{label}</p>
       <input
         type="number"
         inputMode="decimal"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full bg-zinc-800 rounded-lg px-2.5 py-2 text-sm outline-none focus:ring-1 focus:ring-amber-400"
+        className="w-full bg-neutral-100 rounded-lg px-2.5 py-2 text-sm outline-none focus:ring-1 focus:ring-amber-600"
       />
     </div>
   );
@@ -1168,13 +1168,13 @@ function CardioTab({ cardioLog, setCardioLog }) {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-2">
-        <StatCard label="This Week" value={weekDistance.toFixed(1)} sub="miles" color="#fb7185" />
-        <StatCard label="Elevation" value={Math.round(weekElevation)} sub="ft this wk" color="#fb7185" />
+        <StatCard label="This Week" value={weekDistance.toFixed(1)} sub="miles" color="#e11d48" />
+        <StatCard label="Elevation" value={Math.round(weekElevation)} sub="ft this wk" color="#e11d48" />
       </div>
 
       <button
         onClick={() => setShowAdd(true)}
-        className="w-full py-3.5 rounded-2xl bg-rose-400 text-zinc-950 font-semibold flex items-center justify-center gap-2 active:scale-[0.98] transition"
+        className="w-full py-3.5 rounded-2xl bg-rose-600 text-white font-semibold flex items-center justify-center gap-2 active:scale-[0.98] transition"
       >
         <Plus size={20} strokeWidth={2.5} /> Log Activity
       </button>
@@ -1188,7 +1188,7 @@ function CardioTab({ cardioLog, setCardioLog }) {
               <button
                 key={t}
                 onClick={() => setChartType(t)}
-                className={`flex-1 py-2 rounded-lg text-sm font-medium border ${chartType === t ? "bg-rose-400 text-zinc-950 border-rose-400" : "bg-zinc-900 border-zinc-800 text-zinc-400"}`}
+                className={`flex-1 py-2 rounded-lg text-sm font-medium border ${chartType === t ? "bg-rose-600 text-white border-rose-600" : "bg-white border-neutral-200 text-neutral-500"}`}
               >
                 {t}
               </button>
@@ -1199,27 +1199,27 @@ function CardioTab({ cardioLog, setCardioLog }) {
               <button
                 key={m.id}
                 onClick={() => setMetric(m.id)}
-                className={`flex-1 py-1.5 rounded-lg text-xs font-medium border ${metric === m.id ? "bg-zinc-800 border-rose-400 text-rose-400" : "bg-zinc-900 border-zinc-800 text-zinc-500"}`}
+                className={`flex-1 py-1.5 rounded-lg text-xs font-medium border ${metric === m.id ? "bg-neutral-100 border-rose-600 text-rose-600" : "bg-white border-neutral-200 text-neutral-400"}`}
               >
                 {m.label}
               </button>
             ))}
           </div>
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-3 h-56">
+          <div className="bg-white border border-neutral-200 rounded-xl p-3 h-56">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid stroke="#27272a" strokeDasharray="3 3" />
-                <XAxis dataKey="label" tick={{ fill: "#71717a", fontSize: 10 }} />
+                <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
+                <XAxis dataKey="label" tick={{ fill: "#9ca3af", fontSize: 10 }} />
                 <YAxis
-                  tick={{ fill: "#71717a", fontSize: 10 }}
+                  tick={{ fill: "#9ca3af", fontSize: 10 }}
                   reversed={metric === "pace"}
                   tickFormatter={metric === "pace" ? (v) => formatDuration(v) : undefined}
                 />
                 <Tooltip
-                  contentStyle={{ background: "#18181b", border: "1px solid #3f3f46", borderRadius: 8, fontSize: 12 }}
+                  contentStyle={{ background: "#ffffff", border: "1px solid #d1d5db", borderRadius: 8, fontSize: 12 }}
                   formatter={(v) => (metric === "pace" ? formatDuration(v) + "/mi" : v)}
                 />
-                <Line type="monotone" dataKey={metric} stroke="#fb7185" strokeWidth={2.5} dot={{ r: 3, fill: "#fb7185" }} />
+                <Line type="monotone" dataKey={metric} stroke="#e11d48" strokeWidth={2.5} dot={{ r: 3, fill: "#e11d48" }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -1227,32 +1227,32 @@ function CardioTab({ cardioLog, setCardioLog }) {
       )}
 
       <div className="space-y-2">
-        {sorted.length === 0 && <p className="text-zinc-500 text-sm text-center pt-6">No runs or hikes logged yet.</p>}
+        {sorted.length === 0 && <p className="text-neutral-400 text-sm text-center pt-6">No runs or hikes logged yet.</p>}
         {sorted.map((a) => {
           const Icon = a.type === "Hike" ? Mountain : Footprints;
           return (
-            <div key={a.id} className="bg-zinc-900 border border-zinc-800 rounded-xl p-3.5">
+            <div key={a.id} className="bg-white border border-neutral-200 rounded-xl p-3.5">
               <div className="flex items-start justify-between">
                 <div className="flex items-start gap-2.5">
-                  <div className="mt-0.5 p-1.5 rounded-lg bg-rose-400/15">
-                    <Icon size={16} className="text-rose-400" />
+                  <div className="mt-0.5 p-1.5 rounded-lg bg-rose-600/15">
+                    <Icon size={16} className="text-rose-600" />
                   </div>
                   <div>
-                    <p className="font-medium text-sm text-zinc-100">{a.name || a.type}</p>
-                    <p className="text-xs text-zinc-500">{fmtDate(a.date)}</p>
+                    <p className="font-medium text-sm text-neutral-900">{a.name || a.type}</p>
+                    <p className="text-xs text-neutral-400">{fmtDate(a.date)}</p>
                   </div>
                 </div>
                 {confirmDeleteId === a.id ? (
-                  <button onClick={() => deleteActivity(a.id)} className="text-xs text-red-400 font-medium px-2 py-1">Confirm</button>
+                  <button onClick={() => deleteActivity(a.id)} className="text-xs text-red-600 font-medium px-2 py-1">Confirm</button>
                 ) : (
-                  <button onClick={() => setConfirmDeleteId(a.id)} className="p-1.5 text-zinc-600 active:text-red-400"><Trash2 size={16} /></button>
+                  <button onClick={() => setConfirmDeleteId(a.id)} className="p-1.5 text-neutral-400 active:text-red-600"><Trash2 size={16} /></button>
                 )}
               </div>
-              <div className="grid grid-cols-4 gap-1 mt-2.5 pt-2.5 border-t border-zinc-800 text-center">
-                <div><p className="text-sm font-semibold text-zinc-200">{Number(a.distance).toFixed(2)}</p><p className="text-[10px] text-zinc-500">miles</p></div>
-                <div><p className="text-sm font-semibold text-zinc-200">{formatDuration(a.duration)}</p><p className="text-[10px] text-zinc-500">time</p></div>
-                <div><p className="text-sm font-semibold text-zinc-200">{formatPace(a.duration, a.distance)}</p><p className="text-[10px] text-zinc-500">pace</p></div>
-                <div><p className="text-sm font-semibold text-zinc-200">{Math.round(a.elevationGain || 0)}</p><p className="text-[10px] text-zinc-500">ft gain</p></div>
+              <div className="grid grid-cols-4 gap-1 mt-2.5 pt-2.5 border-t border-neutral-200 text-center">
+                <div><p className="text-sm font-semibold text-neutral-800">{Number(a.distance).toFixed(2)}</p><p className="text-[10px] text-neutral-400">miles</p></div>
+                <div><p className="text-sm font-semibold text-neutral-800">{formatDuration(a.duration)}</p><p className="text-[10px] text-neutral-400">time</p></div>
+                <div><p className="text-sm font-semibold text-neutral-800">{formatPace(a.duration, a.distance)}</p><p className="text-[10px] text-neutral-400">pace</p></div>
+                <div><p className="text-sm font-semibold text-neutral-800">{Math.round(a.elevationGain || 0)}</p><p className="text-[10px] text-neutral-400">ft gain</p></div>
               </div>
             </div>
           );
@@ -1281,10 +1281,10 @@ function AddCardioSheet({ onAdd, onClose }) {
 
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/60" onClick={onClose}>
-      <div className="bg-zinc-900 border-t border-zinc-800 rounded-t-2xl w-full max-w-md p-4 space-y-3 max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white border-t border-neutral-200 rounded-t-2xl w-full max-w-md p-4 space-y-3 max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <p className="font-semibold">Log Run or Hike</p>
-          <button onClick={onClose} className="p-1 text-zinc-500"><X size={20} /></button>
+          <button onClick={onClose} className="p-1 text-neutral-400"><X size={20} /></button>
         </div>
 
         <div className="space-y-2.5">
@@ -1293,7 +1293,7 @@ function AddCardioSheet({ onAdd, onClose }) {
               <button
                 key={t}
                 onClick={() => setForm({ ...form, type: t })}
-                className={`flex-1 py-2 rounded-lg text-sm font-medium border ${form.type === t ? "bg-rose-400 text-zinc-950 border-rose-400" : "bg-zinc-800 border-zinc-700 text-zinc-400"}`}
+                className={`flex-1 py-2 rounded-lg text-sm font-medium border ${form.type === t ? "bg-rose-600 text-white border-rose-600" : "bg-neutral-100 border-neutral-300 text-neutral-500"}`}
               >
                 {t}
               </button>
@@ -1304,7 +1304,7 @@ function AddCardioSheet({ onAdd, onClose }) {
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
             placeholder="Activity name (optional)"
-            className="w-full bg-zinc-800 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-1 focus:ring-rose-400"
+            className="w-full bg-neutral-100 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-1 focus:ring-rose-600"
           />
 
           <div className="flex gap-2">
@@ -1312,7 +1312,7 @@ function AddCardioSheet({ onAdd, onClose }) {
               type="date"
               value={form.date}
               onChange={(e) => setForm({ ...form, date: e.target.value })}
-              className="flex-1 bg-zinc-800 rounded-lg px-3 py-2.5 text-sm text-zinc-300 outline-none focus:ring-1 focus:ring-rose-400"
+              className="flex-1 bg-neutral-100 rounded-lg px-3 py-2.5 text-sm text-neutral-700 outline-none focus:ring-1 focus:ring-rose-600"
             />
             <div className="flex-1 relative">
               <input
@@ -1321,14 +1321,14 @@ function AddCardioSheet({ onAdd, onClose }) {
                 value={form.distance}
                 onChange={(e) => setForm({ ...form, distance: e.target.value })}
                 placeholder="Distance"
-                className="w-full bg-zinc-800 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-1 focus:ring-rose-400"
+                className="w-full bg-neutral-100 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-1 focus:ring-rose-600"
               />
-              <span className="absolute right-3 top-2.5 text-xs text-zinc-500">mi</span>
+              <span className="absolute right-3 top-2.5 text-xs text-neutral-400">mi</span>
             </div>
           </div>
 
           <div>
-            <p className="text-[11px] text-zinc-500 mb-1">Duration</p>
+            <p className="text-[11px] text-neutral-400 mb-1">Duration</p>
             <div className="grid grid-cols-3 gap-2">
               <LabeledInput label="Hrs" value={form.hrs} onChange={(v) => setForm({ ...form, hrs: v })} />
               <LabeledInput label="Min" value={form.mins} onChange={(v) => setForm({ ...form, mins: v })} />
@@ -1338,7 +1338,7 @@ function AddCardioSheet({ onAdd, onClose }) {
 
           <LabeledInput label="Elevation gain (ft)" value={form.elevationGain} onChange={(v) => setForm({ ...form, elevationGain: v })} />
 
-          <button onClick={submit} className="w-full py-3 rounded-xl bg-rose-400 text-zinc-950 font-semibold mt-1">
+          <button onClick={submit} className="w-full py-3 rounded-xl bg-rose-600 text-white font-semibold mt-1">
             Save Activity
           </button>
         </div>
