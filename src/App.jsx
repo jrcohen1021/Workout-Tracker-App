@@ -1,15 +1,13 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
-  Dumbbell, TrendingUp, UtensilsCrossed, MessageCircle, Plus, X, Camera,
+  Dumbbell, TrendingUp, UtensilsCrossed, Plus, X,
   ChevronLeft, ChevronRight, Trash2, Settings, Check, Loader2, ChevronDown,
-  ChevronUp, Pencil, Send, Flame, Target, Mountain, Footprints, Timer
+  ChevronUp, Pencil, Flame, Target, Mountain, Footprints, Timer
 } from "lucide-react";
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  BarChart, Bar
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from "recharts";
 import { loadKey, saveKey, deleteKey } from "./lib/storage";
-import { callClaude } from "./lib/claude";
 import { SignOutButton } from "./components/AuthGate";
 
 // ---------- Constants ----------
@@ -37,7 +35,6 @@ const TABS = [
   { id: "progress", label: "Progress", icon: TrendingUp, accent: "#38bdf8" },
   { id: "cardio", label: "Cardio", icon: Mountain, accent: "#fb7185" },
   { id: "food", label: "Food", icon: UtensilsCrossed, accent: "#fbbf24" },
-  { id: "coach", label: "Coach", icon: MessageCircle, accent: "#a78bfa" },
 ];
 
 const todayStr = () => new Date().toISOString().slice(0, 10);
@@ -46,92 +43,6 @@ const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
 function fmtDate(d) {
   const date = new Date(d + "T00:00:00");
   return date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
-}
-
-// ---------- Claude API helpers ----------
-// callClaude() itself now lives in ./lib/claude.js — it calls our claude-proxy
-// Supabase Edge Function instead of the Anthropic API directly.
-
-function extractJSON(text) {
-  const cleaned = text.replace(/```json/gi, "").replace(/```/g, "").trim();
-  const start = cleaned.indexOf("{");
-  const end = cleaned.lastIndexOf("}");
-  const slice = start >= 0 && end >= 0 ? cleaned.slice(start, end + 1) : cleaned;
-  return JSON.parse(slice);
-}
-
-async function inferMuscles(exerciseName) {
-  const taxonomyStr = Object.entries(MUSCLE_TAXONOMY)
-    .map(([g, regions]) => `${g}: ${regions.join(", ")}`)
-    .join(" | ");
-  const prompt =
-    `Exercise: "${exerciseName}". Identify which muscle groups and specific regions this exercise primarily targets. ` +
-    `Choose group and region ONLY from this taxonomy (region must belong to its group): ${taxonomyStr}. ` +
-    `Respond with ONLY valid JSON, no other text, no markdown fences, in this exact format: ` +
-    `{"muscles":[{"group":"Chest","region":"Upper Chest"}]}. Include 1-3 targets ordered by emphasis (primary first).`;
-  const text = await callClaude([{ role: "user", content: prompt }]);
-  const parsed = extractJSON(text);
-  return parsed.muscles || [];
-}
-
-async function analyzeFoodImage(base64, mediaType) {
-  const prompt =
-    "You are a nutrition estimation assistant. Look at this food photo and estimate its nutrition facts for the full " +
-    "portion shown. Respond with ONLY valid JSON, no other text, no markdown fences, in this exact format: " +
-    '{"name":"short description","calories":number,"protein":number,"carbs":number,"fat":number}. ' +
-    "Calories in kcal, protein/carbs/fat in grams. Give your single best estimate.";
-  const text = await callClaude([
-    {
-      role: "user",
-      content: [
-        { type: "image", source: { type: "base64", media_type: mediaType, data: base64 } },
-        { type: "text", text: prompt },
-      ],
-    },
-  ]);
-  return extractJSON(text);
-}
-
-async function analyzeStravaScreenshot(base64, mediaType) {
-  const prompt =
-    "This is a screenshot from a running/hiking app (like Strava) showing an activity summary. Extract the activity data. " +
-    "Respond with ONLY valid JSON, no other text, no markdown fences, in this exact format: " +
-    '{"type":"Run or Hike","name":"activity title if shown, else null","distanceMiles":number,"durationSeconds":number,' +
-    '"elevationGainFt":number,"date":"YYYY-MM-DD if a date is visible, else null"}. ' +
-    "If distance/elevation are shown in km or meters, convert to miles/feet. If pace is shown but not duration, compute duration from pace and distance. " +
-    "Use your best judgment for Run vs Hike based on the activity name, pace, and elevation profile.";
-  const text = await callClaude([
-    {
-      role: "user",
-      content: [
-        { type: "image", source: { type: "base64", media_type: mediaType, data: base64 } },
-        { type: "text", text: prompt },
-      ],
-    },
-  ]);
-  return extractJSON(text);
-}
-
-
-
-// ---------- Muscle volume computation ----------
-
-function computeMuscleVolume(sessions, exercises, days) {
-  const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
-  const counts = {}; // "Group|Region" -> sets
-  sessions.forEach((s) => {
-    if (new Date(s.date).getTime() < cutoff) return;
-    s.exercises.forEach((ex) => {
-      const def = exercises.find((e) => e.id === ex.exerciseId);
-      if (!def) return;
-      const setCount = ex.sets.length;
-      (def.muscles || []).forEach((m) => {
-        const key = `${m.group}|${m.region}`;
-        counts[key] = (counts[key] || 0) + setCount;
-      });
-    });
-  });
-  return counts;
 }
 
 function exportBackup(data) {
@@ -159,7 +70,6 @@ export default function WorkoutFoodApp() {
   const [sessions, setSessions] = useState([]);
   const [foodLog, setFoodLog] = useState([]);
   const [targets, setTargets] = useState({ calories: 2400, protein: 180, carbs: 250, fat: 70 });
-  const [coachMessages, setCoachMessages] = useState([]);
   const [cardioLog, setCardioLog] = useState([]);
 
   const [loadFailed, setLoadFailed] = useState(false);
@@ -169,12 +79,11 @@ export default function WorkoutFoodApp() {
     let cancelled = false;
     setReady(false);
     (async () => {
-      const [ex, se, fl, tg, cm, cl] = await Promise.all([
+      const [ex, se, fl, tg, cl] = await Promise.all([
         loadKey("exercises", []),
         loadKey("sessions", []),
         loadKey("food-log", []),
         loadKey("daily-targets", { calories: 2400, protein: 180, carbs: 250, fat: 70 }),
-        loadKey("coach-chat", []),
         loadKey("cardio-log", []),
       ]);
       if (cancelled) return;
@@ -182,9 +91,8 @@ export default function WorkoutFoodApp() {
       setSessions(se.value);
       setFoodLog(fl.value);
       setTargets(tg.value);
-      setCoachMessages(cm.value);
       setCardioLog(cl.value);
-      setLoadFailed([ex, se, fl, tg, cm, cl].some((r) => r.failed));
+      setLoadFailed([ex, se, fl, tg, cl].some((r) => r.failed));
       setReady(true);
     })();
     return () => { cancelled = true; };
@@ -211,7 +119,6 @@ export default function WorkoutFoodApp() {
     sessions: (v) => persistAndSave(setSessions, "sessions", v),
     foodLog: (v) => persistAndSave(setFoodLog, "food-log", v),
     targets: (v) => persistAndSave(setTargets, "daily-targets", v),
-    coachMessages: (v) => persistAndSave(setCoachMessages, "coach-chat", v),
     cardioLog: (v) => persistAndSave(setCardioLog, "cardio-log", v),
   };
 
@@ -268,17 +175,6 @@ export default function WorkoutFoodApp() {
         {activeTab === "cardio" && <CardioTab cardioLog={cardioLog} setCardioLog={persist.cardioLog} />}
         {activeTab === "food" && (
           <FoodTab foodLog={foodLog} setFoodLog={persist.foodLog} targets={targets} setTargets={persist.targets} />
-        )}
-        {activeTab === "coach" && (
-          <CoachTab
-            exercises={exercises}
-            sessions={sessions}
-            foodLog={foodLog}
-            targets={targets}
-            cardioLog={cardioLog}
-            messages={coachMessages}
-            setMessages={persist.coachMessages}
-          />
         )}
       </main>
 
@@ -702,16 +598,13 @@ function ExercisePicker({ exercises, setExercises, onPick, onClose }) {
   const [showForm, setShowForm] = useState(false);
   const [newBase, setNewBase] = useState("");
   const [newEquipment, setNewEquipment] = useState("");
-  const [inferring, setInferring] = useState(false);
   const [pendingMuscles, setPendingMuscles] = useState(null); // {baseName, equipment, muscles}
-  const [error, setError] = useState("");
 
   const filtered = exercises.filter((e) => e.name.toLowerCase().includes(query.toLowerCase()));
 
   const openForm = () => {
     setNewBase(query.trim());
     setNewEquipment("");
-    setError("");
     setShowForm(true);
   };
 
@@ -721,11 +614,10 @@ function ExercisePicker({ exercises, setExercises, onPick, onClose }) {
   const proposedName = displayName(newBase.trim(), newEquipment.trim());
   const exactVariantExists = exercises.some((e) => e.name.toLowerCase() === proposedName.toLowerCase());
 
-  const handleAddNew = async () => {
+  const handleAddNew = () => {
     const baseName = newBase.trim();
     const equipment = newEquipment.trim();
     if (!baseName) return;
-    setError("");
 
     if (exactVariantExists) {
       const existing = exercises.find((e) => e.name.toLowerCase() === proposedName.toLowerCase());
@@ -736,7 +628,7 @@ function ExercisePicker({ exercises, setExercises, onPick, onClose }) {
     }
 
     if (matchingBase) {
-      // Reuse muscle tags from the existing base movement — no AI call needed.
+      // Reuse muscle tags from the existing base movement.
       const newEx = { id: uid(), baseName, equipment, name: proposedName, muscles: matchingBase.muscles || [] };
       const next = [...exercises, newEx];
       setExercises(next);
@@ -746,16 +638,7 @@ function ExercisePicker({ exercises, setExercises, onPick, onClose }) {
       return;
     }
 
-    setInferring(true);
-    try {
-      const muscles = await inferMuscles(baseName);
-      setPendingMuscles({ baseName, equipment, muscles });
-    } catch (e) {
-      setPendingMuscles({ baseName, equipment, muscles: [] });
-      setError("Couldn't auto-detect muscles — you can set them manually or skip.");
-    } finally {
-      setInferring(false);
-    }
+    setPendingMuscles({ baseName, equipment, muscles: [] });
   };
 
   const confirmNewExercise = () => {
@@ -784,7 +667,6 @@ function ExercisePicker({ exercises, setExercises, onPick, onClose }) {
       <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-3.5 space-y-3">
         <p className="font-medium text-zinc-100">"{displayName(pendingMuscles.baseName, pendingMuscles.equipment)}" targets:</p>
         <p className="text-xs text-zinc-500">Muscle tags are saved against "{pendingMuscles.baseName}" — every brand/equipment variant of this movement will share them.</p>
-        {error && <p className="text-xs text-amber-400">{error}</p>}
         <div className="space-y-2">
           {Object.entries(MUSCLE_TAXONOMY).map(([group, regions]) => (
             <div key={group}>
@@ -851,16 +733,15 @@ function ExercisePicker({ exercises, setExercises, onPick, onClose }) {
         </div>
         {newBase.trim() && <p className="text-xs text-zinc-500">Will be added as "{proposedName}"</p>}
         {matchingBase && !exactVariantExists && (
-          <p className="text-xs text-sky-400">Reusing muscle tags from "{matchingBase.baseName || getBaseName(matchingBase)}" — no analysis needed.</p>
+          <p className="text-xs text-sky-400">Reusing muscle tags from "{matchingBase.baseName || getBaseName(matchingBase)}".</p>
         )}
         {exactVariantExists && <p className="text-xs text-zinc-500">This exact variant already exists — tapping Add will just use it.</p>}
         <button
           onClick={handleAddNew}
-          disabled={!newBase.trim() || inferring}
+          disabled={!newBase.trim()}
           className="w-full py-2.5 rounded-lg bg-emerald-400 text-zinc-950 text-sm font-semibold flex items-center justify-center gap-1.5 disabled:opacity-40"
         >
-          {inferring ? <Loader2 size={15} className="animate-spin" /> : <Plus size={15} />}
-          {inferring ? "Analyzing muscles worked…" : "Add Exercise"}
+          <Plus size={15} /> Add Exercise
         </button>
       </div>
     );
@@ -1169,40 +1050,7 @@ function TargetsEditor({ targets, onSave }) {
 }
 
 function AddMealSheet({ onAdd, onClose }) {
-  const [mode, setMode] = useState(null); // 'photo' | 'manual'
-  const [analyzing, setAnalyzing] = useState(false);
-  const [error, setError] = useState("");
   const [form, setForm] = useState({ name: "", calories: "", protein: "", carbs: "", fat: "" });
-  const fileRef = useRef(null);
-
-  const onFileChange = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setError("");
-    setAnalyzing(true);
-    try {
-      const base64 = await new Promise((resolve, reject) => {
-        const r = new FileReader();
-        r.onload = () => resolve(r.result.split(",")[1]);
-        r.onerror = () => reject(new Error("read failed"));
-        r.readAsDataURL(file);
-      });
-      const result = await analyzeFoodImage(base64, file.type || "image/jpeg");
-      setForm({
-        name: result.name || "Meal",
-        calories: Math.round(result.calories) || "",
-        protein: Math.round(result.protein) || "",
-        carbs: Math.round(result.carbs) || "",
-        fat: Math.round(result.fat) || "",
-      });
-      setMode("review");
-    } catch (err) {
-      setError("Couldn't analyze that photo. You can enter the details manually instead.");
-      setMode("manual");
-    } finally {
-      setAnalyzing(false);
-    }
-  };
 
   const submit = () => {
     onAdd({
@@ -1222,52 +1070,23 @@ function AddMealSheet({ onAdd, onClose }) {
           <button onClick={onClose} className="p-1 text-zinc-500"><X size={20} /></button>
         </div>
 
-        {!mode && (
-          <div className="space-y-2">
-            <button
-              onClick={() => fileRef.current?.click()}
-              className="w-full py-3.5 rounded-xl bg-amber-400 text-zinc-950 font-semibold flex items-center justify-center gap-2"
-            >
-              <Camera size={19} /> Scan Photo
-            </button>
-            <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={onFileChange} />
-            <button
-              onClick={() => { setMode("manual"); setForm({ name: "", calories: "", protein: "", carbs: "", fat: "" }); }}
-              className="w-full py-3.5 rounded-xl bg-zinc-800 text-zinc-200 font-medium"
-            >
-              Enter Manually
-            </button>
+        <div className="space-y-2.5">
+          <input
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            placeholder="Food name"
+            className="w-full bg-zinc-800 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-1 focus:ring-amber-400"
+          />
+          <div className="grid grid-cols-2 gap-2">
+            <LabeledInput label="Calories" value={form.calories} onChange={(v) => setForm({ ...form, calories: v })} />
+            <LabeledInput label="Protein (g)" value={form.protein} onChange={(v) => setForm({ ...form, protein: v })} />
+            <LabeledInput label="Carbs (g)" value={form.carbs} onChange={(v) => setForm({ ...form, carbs: v })} />
+            <LabeledInput label="Fat (g)" value={form.fat} onChange={(v) => setForm({ ...form, fat: v })} />
           </div>
-        )}
-
-        {analyzing && (
-          <div className="py-8 flex flex-col items-center gap-2 text-zinc-400 text-sm">
-            <Loader2 className="animate-spin" size={26} />
-            Reading nutrition facts from photo…
-          </div>
-        )}
-
-        {!analyzing && (mode === "manual" || mode === "review") && (
-          <div className="space-y-2.5">
-            {error && <p className="text-xs text-amber-400">{error}</p>}
-            {mode === "review" && <p className="text-xs text-zinc-500">Review the AI estimate and adjust anything before saving.</p>}
-            <input
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              placeholder="Food name"
-              className="w-full bg-zinc-800 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-1 focus:ring-amber-400"
-            />
-            <div className="grid grid-cols-2 gap-2">
-              <LabeledInput label="Calories" value={form.calories} onChange={(v) => setForm({ ...form, calories: v })} />
-              <LabeledInput label="Protein (g)" value={form.protein} onChange={(v) => setForm({ ...form, protein: v })} />
-              <LabeledInput label="Carbs (g)" value={form.carbs} onChange={(v) => setForm({ ...form, carbs: v })} />
-              <LabeledInput label="Fat (g)" value={form.fat} onChange={(v) => setForm({ ...form, fat: v })} />
-            </div>
-            <button onClick={submit} className="w-full py-3 rounded-xl bg-amber-400 text-zinc-950 font-semibold">
-              Save Meal
-            </button>
-          </div>
-        )}
+          <button onClick={submit} className="w-full py-3 rounded-xl bg-amber-400 text-zinc-950 font-semibold">
+            Save Meal
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -1444,46 +1263,9 @@ function CardioTab({ cardioLog, setCardioLog }) {
 }
 
 function AddCardioSheet({ onAdd, onClose }) {
-  const [mode, setMode] = useState(null); // 'manual' | 'review'
-  const [analyzing, setAnalyzing] = useState(false);
-  const [error, setError] = useState("");
   const [form, setForm] = useState({
     type: "Run", name: "", date: todayStr(), distance: "", hrs: "0", mins: "", secs: "", elevationGain: "",
   });
-  const fileRef = useRef(null);
-
-  const onFileChange = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setError("");
-    setAnalyzing(true);
-    try {
-      const base64 = await new Promise((resolve, reject) => {
-        const r = new FileReader();
-        r.onload = () => resolve(r.result.split(",")[1]);
-        r.onerror = () => reject(new Error("read failed"));
-        r.readAsDataURL(file);
-      });
-      const result = await analyzeStravaScreenshot(base64, file.type || "image/jpeg");
-      const totalSec = Math.round(result.durationSeconds) || 0;
-      setForm({
-        type: result.type === "Hike" ? "Hike" : "Run",
-        name: result.name || "",
-        date: result.date || todayStr(),
-        distance: result.distanceMiles ? Number(result.distanceMiles).toFixed(2) : "",
-        hrs: String(Math.floor(totalSec / 3600)),
-        mins: String(Math.floor((totalSec % 3600) / 60)),
-        secs: String(totalSec % 60),
-        elevationGain: result.elevationGainFt ? Math.round(result.elevationGainFt) : "",
-      });
-      setMode("review");
-    } catch (err) {
-      setError("Couldn't read that screenshot — enter the details manually instead.");
-      setMode("manual");
-    } finally {
-      setAnalyzing(false);
-    }
-  };
 
   const submit = () => {
     const duration = (Number(form.hrs) || 0) * 3600 + (Number(form.mins) || 0) * 60 + (Number(form.secs) || 0);
@@ -1505,244 +1287,63 @@ function AddCardioSheet({ onAdd, onClose }) {
           <button onClick={onClose} className="p-1 text-zinc-500"><X size={20} /></button>
         </div>
 
-        {!mode && (
-          <div className="space-y-2">
-            <button
-              onClick={() => fileRef.current?.click()}
-              className="w-full py-3.5 rounded-xl bg-rose-400 text-zinc-950 font-semibold flex items-center justify-center gap-2"
-            >
-              <Camera size={19} /> Import Strava Screenshot
-            </button>
-            <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={onFileChange} />
-            <button
-              onClick={() => setMode("manual")}
-              className="w-full py-3.5 rounded-xl bg-zinc-800 text-zinc-200 font-medium"
-            >
-              Enter Manually
-            </button>
+        <div className="space-y-2.5">
+          <div className="flex gap-2">
+            {CARDIO_TYPES.map((t) => (
+              <button
+                key={t}
+                onClick={() => setForm({ ...form, type: t })}
+                className={`flex-1 py-2 rounded-lg text-sm font-medium border ${form.type === t ? "bg-rose-400 text-zinc-950 border-rose-400" : "bg-zinc-800 border-zinc-700 text-zinc-400"}`}
+              >
+                {t}
+              </button>
+            ))}
           </div>
-        )}
 
-        {analyzing && (
-          <div className="py-8 flex flex-col items-center gap-2 text-zinc-400 text-sm">
-            <Loader2 className="animate-spin" size={26} />
-            Reading activity from screenshot…
-          </div>
-        )}
+          <input
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            placeholder="Activity name (optional)"
+            className="w-full bg-zinc-800 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-1 focus:ring-rose-400"
+          />
 
-        {!analyzing && (mode === "manual" || mode === "review") && (
-          <div className="space-y-2.5">
-            {error && <p className="text-xs text-amber-400">{error}</p>}
-            {mode === "review" && <p className="text-xs text-zinc-500">Review the imported data and adjust anything before saving.</p>}
-
-            <div className="flex gap-2">
-              {CARDIO_TYPES.map((t) => (
-                <button
-                  key={t}
-                  onClick={() => setForm({ ...form, type: t })}
-                  className={`flex-1 py-2 rounded-lg text-sm font-medium border ${form.type === t ? "bg-rose-400 text-zinc-950 border-rose-400" : "bg-zinc-800 border-zinc-700 text-zinc-400"}`}
-                >
-                  {t}
-                </button>
-              ))}
-            </div>
-
+          <div className="flex gap-2">
             <input
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              placeholder="Activity name (optional)"
-              className="w-full bg-zinc-800 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-1 focus:ring-rose-400"
+              type="date"
+              value={form.date}
+              onChange={(e) => setForm({ ...form, date: e.target.value })}
+              className="flex-1 bg-zinc-800 rounded-lg px-3 py-2.5 text-sm text-zinc-300 outline-none focus:ring-1 focus:ring-rose-400"
             />
-
-            <div className="flex gap-2">
+            <div className="flex-1 relative">
               <input
-                type="date"
-                value={form.date}
-                onChange={(e) => setForm({ ...form, date: e.target.value })}
-                className="flex-1 bg-zinc-800 rounded-lg px-3 py-2.5 text-sm text-zinc-300 outline-none focus:ring-1 focus:ring-rose-400"
+                type="number"
+                inputMode="decimal"
+                value={form.distance}
+                onChange={(e) => setForm({ ...form, distance: e.target.value })}
+                placeholder="Distance"
+                className="w-full bg-zinc-800 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-1 focus:ring-rose-400"
               />
-              <div className="flex-1 relative">
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  value={form.distance}
-                  onChange={(e) => setForm({ ...form, distance: e.target.value })}
-                  placeholder="Distance"
-                  className="w-full bg-zinc-800 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-1 focus:ring-rose-400"
-                />
-                <span className="absolute right-3 top-2.5 text-xs text-zinc-500">mi</span>
-              </div>
+              <span className="absolute right-3 top-2.5 text-xs text-zinc-500">mi</span>
             </div>
-
-            <div>
-              <p className="text-[11px] text-zinc-500 mb-1">Duration</p>
-              <div className="grid grid-cols-3 gap-2">
-                <LabeledInput label="Hrs" value={form.hrs} onChange={(v) => setForm({ ...form, hrs: v })} />
-                <LabeledInput label="Min" value={form.mins} onChange={(v) => setForm({ ...form, mins: v })} />
-                <LabeledInput label="Sec" value={form.secs} onChange={(v) => setForm({ ...form, secs: v })} />
-              </div>
-            </div>
-
-            <LabeledInput label="Elevation gain (ft)" value={form.elevationGain} onChange={(v) => setForm({ ...form, elevationGain: v })} />
-
-            <button onClick={submit} className="w-full py-3 rounded-xl bg-rose-400 text-zinc-950 font-semibold mt-1">
-              Save Activity
-            </button>
           </div>
-        )}
-      </div>
-    </div>
-  );
-}
 
-// ---------- Coach Tab ----------
+          <div>
+            <p className="text-[11px] text-zinc-500 mb-1">Duration</p>
+            <div className="grid grid-cols-3 gap-2">
+              <LabeledInput label="Hrs" value={form.hrs} onChange={(v) => setForm({ ...form, hrs: v })} />
+              <LabeledInput label="Min" value={form.mins} onChange={(v) => setForm({ ...form, mins: v })} />
+              <LabeledInput label="Sec" value={form.secs} onChange={(v) => setForm({ ...form, secs: v })} />
+            </div>
+          </div>
 
-function buildCoachContext(exercises, sessions, foodLog, targets, cardioLog) {
-  const volume30 = computeMuscleVolume(sessions, exercises, 30);
-  const volumeLines = Object.entries(volume30)
-    .sort((a, b) => b[1] - a[1])
-    .map(([k, v]) => `${k.replace("|", " - ")}: ${v} sets`)
-    .join("\n") || "No sets logged in the last 30 days.";
+          <LabeledInput label="Elevation gain (ft)" value={form.elevationGain} onChange={(v) => setForm({ ...form, elevationGain: v })} />
 
-  const last7 = foodLog.filter((f) => new Date(f.date).getTime() >= Date.now() - 7 * 86400000);
-  const byDay = {};
-  last7.forEach((f) => {
-    byDay[f.date] = byDay[f.date] || { calories: 0, protein: 0, carbs: 0, fat: 0 };
-    byDay[f.date].calories += f.calories;
-    byDay[f.date].protein += f.protein;
-    byDay[f.date].carbs += f.carbs;
-    byDay[f.date].fat += f.fat;
-  });
-  const foodLines = Object.entries(byDay)
-    .map(([d, t]) => `${d}: ${Math.round(t.calories)} kcal, P${Math.round(t.protein)} C${Math.round(t.carbs)} F${Math.round(t.fat)}`)
-    .join("\n") || "No meals logged in the last 7 days.";
-
-  const recentSessions = sessions
-    .slice()
-    .sort((a, b) => (a.date < b.date ? 1 : -1))
-    .slice(0, 5)
-    .map((s) => `${s.date} ${s.name || ""}: ` + s.exercises.map((e) => `${e.exerciseName} (${e.sets.length} sets)`).join(", "))
-    .join("\n") || "No workouts logged.";
-
-  const cardioRecent = (cardioLog || [])
-    .filter((a) => new Date(a.date).getTime() >= Date.now() - 14 * 86400000)
-    .slice()
-    .sort((a, b) => (a.date < b.date ? 1 : -1))
-    .map((a) => `${a.date} ${a.type}${a.name ? " - " + a.name : ""}: ${Number(a.distance).toFixed(2)} mi, ${formatDuration(a.duration)}, ${formatPace(a.duration, a.distance)} pace, ${Math.round(a.elevationGain || 0)} ft gain`)
-    .join("\n") || "No runs or hikes logged in the last 14 days.";
-
-  return (
-    `MUSCLE GROUP TRAINING VOLUME (last 30 days, in sets):\n${volumeLines}\n\n` +
-    `RECENT WORKOUT SESSIONS:\n${recentSessions}\n\n` +
-    `RECENT RUNS/HIKES (last 14 days):\n${cardioRecent}\n\n` +
-    `DAILY NUTRITION TARGETS: ${targets.calories} kcal, ${targets.protein}g protein, ${targets.carbs}g carbs, ${targets.fat}g fat\n\n` +
-    `NUTRITION LOG (last 7 days):\n${foodLines}`
-  );
-}
-
-function CoachTab({ exercises, sessions, foodLog, targets, cardioLog, messages, setMessages }) {
-  const [input, setInput] = useState("");
-  const [sending, setSending] = useState(false);
-  const [error, setError] = useState("");
-  const scrollRef = useRef(null);
-
-  useEffect(() => {
-    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, sending]);
-
-  const volume7 = computeMuscleVolume(sessions, exercises, 7);
-  const chartData = Object.entries(volume7)
-    .map(([k, v]) => {
-      const [group, region] = k.split("|");
-      return { name: region, sets: v, group };
-    })
-    .sort((a, b) => b.sets - a.sets)
-    .slice(0, 8);
-
-  const send = async () => {
-    const text = input.trim();
-    if (!text || sending) return;
-    setInput("");
-    setError("");
-    const isFirst = messages.length === 0;
-    const userContent = isFirst ? buildCoachContext(exercises, sessions, foodLog, targets, cardioLog) + "\n\nMy question: " + text : text;
-    const nextMessages = [...messages, { role: "user", content: userContent, display: text }];
-    setMessages(nextMessages);
-    setSending(true);
-    try {
-      const apiMessages = nextMessages.map((m) => ({ role: m.role, content: m.content }));
-      const reply = await callClaude(apiMessages);
-      setMessages([...nextMessages, { role: "assistant", content: reply, display: reply }]);
-    } catch (e) {
-      setError("The coach couldn't respond — try again.");
-    } finally {
-      setSending(false);
-    }
-  };
-
-  return (
-    <div className="flex flex-col h-[calc(100vh-160px)]">
-      {chartData.length > 0 && (
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-3 mb-3 h-40 shrink-0">
-          <p className="text-[11px] text-zinc-500 uppercase mb-1">Sets by region · last 7 days</p>
-          <ResponsiveContainer width="100%" height="90%">
-            <BarChart data={chartData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
-              <XAxis dataKey="name" tick={{ fill: "#71717a", fontSize: 9 }} interval={0} angle={-25} textAnchor="end" height={40} />
-              <YAxis tick={{ fill: "#71717a", fontSize: 10 }} allowDecimals={false} />
-              <Tooltip contentStyle={{ background: "#18181b", border: "1px solid #3f3f46", borderRadius: 8, fontSize: 12 }} />
-              <Bar dataKey="sets" radius={[4, 4, 0, 0]} fill="#a78bfa" />
-            </BarChart>
-          </ResponsiveContainer>
+          <button onClick={submit} className="w-full py-3 rounded-xl bg-rose-400 text-zinc-950 font-semibold mt-1">
+            Save Activity
+          </button>
         </div>
-      )}
-
-      <div className="flex-1 overflow-y-auto space-y-3 pb-2">
-        {messages.length === 0 && (
-          <div className="text-center pt-8 space-y-2">
-            <MessageCircle className="mx-auto text-violet-400" size={28} />
-            <p className="text-zinc-400 text-sm px-4">
-              Ask your coach what muscles you're neglecting, what to train next, or how your nutrition looks this week.
-            </p>
-          </div>
-        )}
-        {messages.map((m, i) => (
-          <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-            <div
-              className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm whitespace-pre-wrap ${
-                m.role === "user" ? "bg-violet-400 text-zinc-950" : "bg-zinc-900 border border-zinc-800 text-zinc-100"
-              }`}
-            >
-              {m.display || m.content}
-            </div>
-          </div>
-        ))}
-        {sending && (
-          <div className="flex justify-start">
-            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl px-3.5 py-2.5">
-              <Loader2 className="animate-spin text-violet-400" size={16} />
-            </div>
-          </div>
-        )}
-        {error && <p className="text-xs text-red-400 text-center">{error}</p>}
-        <div ref={scrollRef} />
-      </div>
-
-      <div className="flex gap-2 pt-2 shrink-0">
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && send()}
-          placeholder="Ask your coach…"
-          className="flex-1 bg-zinc-900 border border-zinc-800 rounded-full px-4 py-2.5 text-sm outline-none focus:border-violet-400"
-        />
-        <button
-          onClick={send}
-          disabled={sending || !input.trim()}
-          className="w-11 h-11 rounded-full bg-violet-400 text-zinc-950 flex items-center justify-center disabled:opacity-40 shrink-0"
-        >
-          <Send size={18} />
-        </button>
       </div>
     </div>
   );
 }
+

@@ -4,7 +4,7 @@ Each of these is a `key` in the Supabase `app_state` table (see
 `supabase/migrations/0001_init.sql`): one row per `(user_id, key)`, with the
 JSON shown below stored in that row's `value` jsonb column. Row Level Security
 scopes every row to `auth.uid()`, so each signed-in account gets its own
-private copy of all six keys, synced across devices.
+private copy of all five keys, synced across devices.
 
 ## `exercises` — array
 
@@ -65,16 +65,6 @@ the top of `src/App.jsx`):
 
 ```json
 { "calories": 2400, "protein": 180, "carbs": 250, "fat": 70 }
-```
-
-## `coach-chat` — array (chat history with the AI coach)
-
-```json
-{
-  "role": "user | assistant",
-  "content": "string — full text sent to/from the API (includes injected context on the first user turn)",
-  "display": "string — what's actually shown in the chat bubble (shorter than content for the first turn)"
-}
 ```
 
 ## `cardio-log` — array (runs/hikes)
