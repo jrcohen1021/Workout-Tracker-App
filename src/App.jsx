@@ -193,7 +193,10 @@ export default function WorkoutFoodApp() {
         className="fixed -bottom-24 -left-24 w-72 h-72 rounded-full blur-3xl opacity-10 pointer-events-none transition-colors duration-500"
         style={{ background: activeAccent }}
       />
-      <header className="px-4 pt-5 pb-3 sticky top-0 bg-neutral-950/80 backdrop-blur-xl z-20 border-b border-white/10">
+      <header
+        className="px-4 pb-3 sticky top-0 bg-neutral-950/80 backdrop-blur-xl z-20 border-b border-white/10"
+        style={{ paddingTop: "calc(1.25rem + env(safe-area-inset-top, 0px))" }}
+      >
         <div className="flex items-center justify-between">
           <h1
             className="text-xl font-extrabold tracking-tight bg-clip-text text-transparent"
@@ -229,7 +232,7 @@ export default function WorkoutFoodApp() {
         )}
       </header>
 
-      <main className="flex-1 overflow-y-auto px-4 pt-3 pb-24">
+      <main className="flex-1 overflow-y-auto px-4 pt-3" style={{ paddingBottom: "calc(6rem + env(safe-area-inset-bottom, 0px))" }}>
         {activeTab === "workouts" && (
           <WorkoutsTab
             exercises={exercises}
@@ -247,7 +250,10 @@ export default function WorkoutFoodApp() {
         )}
       </main>
 
-      <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-neutral-900/90 backdrop-blur-xl border-t border-white/10 flex z-30">
+      <nav
+        className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-neutral-900/90 backdrop-blur-xl border-t border-white/10 flex z-30"
+        style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+      >
         {TABS.map((t) => {
           const Icon = t.icon;
           const active = activeTab === t.id;
