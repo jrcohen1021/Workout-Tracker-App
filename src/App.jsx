@@ -63,6 +63,17 @@ function getBestWeightForExercise(sessions, exerciseId, excludeSessionId) {
   return best;
 }
 
+function getPreviousLog(sessions, exerciseId, excludeSessionId) {
+  let latest = null;
+  sessions.forEach((s) => {
+    if (s.id === excludeSessionId) return;
+    if (latest && s.date <= latest.date) return;
+    const match = s.exercises.find((e) => e.exerciseId === exerciseId);
+    if (match) latest = { date: s.date, sets: match.sets };
+  });
+  return latest;
+}
+
 // ---------- Plate calculator ----------
 
 const PLATE_WEIGHTS = [45, 35, 25, 10, 5, 2.5];
@@ -673,10 +684,11 @@ function SessionEditor({ draft, setDraft, exercises, setExercises, sessions, edi
 
       {draft.exercises.map((ex, exIdx) => {
         const priorBest = getBestWeightForExercise(sessions, ex.exerciseId, editingOriginalId);
+        const previousLog = getPreviousLog(sessions, ex.exerciseId, editingOriginalId);
         const lastWeight = ex.sets[ex.sets.length - 1]?.weight;
         return (
           <div key={exIdx} className="bg-neutral-900 border border-white/10 rounded-xl p-3.5">
-            <div className="flex items-center justify-between mb-2.5">
+            <div className="flex items-center justify-between mb-1">
               <p className="font-medium text-white">{ex.exerciseName}</p>
               <div className="flex items-center gap-1">
                 <button
@@ -691,6 +703,11 @@ function SessionEditor({ draft, setDraft, exercises, setExercises, sessions, edi
                 </button>
               </div>
             </div>
+            {previousLog && (
+              <p className="text-xs text-neutral-500 mb-2.5">
+                Last time ({fmtDate(previousLog.date)}): {previousLog.sets.map((st, i) => `${st.weight}×${st.reps}`).join(", ")}
+              </p>
+            )}
             <div className="grid grid-cols-[1fr_1fr_1fr_auto] gap-2 mb-1.5 px-1">
               <span className="text-[11px] text-neutral-500 uppercase">Set</span>
               <span className="text-[11px] text-neutral-500 uppercase">Lbs</span>
