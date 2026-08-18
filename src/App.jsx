@@ -495,6 +495,7 @@ function WorkoutsTab({ exercises, setExercises, sessions, setSessions, templates
   const [importFile, setImportFile] = useState(null); // {exercises, sessions} preview
   const [importError, setImportError] = useState("");
   const [confirmClearAll, setConfirmClearAll] = useState(false);
+  const [confirmClearExercises, setConfirmClearExercises] = useState(false);
   const importInputRef = useRef(null);
 
   const onImportFileChange = async (e) => {
@@ -649,6 +650,32 @@ function WorkoutsTab({ exercises, setExercises, sessions, setSessions, templates
             </button>
             <button
               onClick={() => { setSessions([]); setConfirmClearAll(false); }}
+              className="flex-1 py-2.5 rounded-lg bg-red-500/20 text-red-400 text-sm font-semibold"
+            >
+              Delete All
+            </button>
+          </div>
+        </div>
+      )}
+
+      {exercises.length > 0 && !confirmClearExercises && (
+        <button onClick={() => setConfirmClearExercises(true)} className="text-xs text-neutral-500 active:text-red-400">
+          Clear exercise library
+        </button>
+      )}
+      {confirmClearExercises && (
+        <div className="bg-neutral-900 border border-red-500/30 rounded-xl p-3.5 space-y-2.5">
+          <p className="text-sm text-neutral-100">
+            Delete all {exercises.length} exercises from your library? Logged workout history keeps its exercise
+            names, but until you re-add them, these exercises won't appear in Progress charts, the muscle-group
+            breakdown, or previous-log/PR lookups. This can't be undone.
+          </p>
+          <div className="flex gap-2">
+            <button onClick={() => setConfirmClearExercises(false)} className="flex-1 py-2.5 rounded-lg bg-white/5 text-neutral-300 text-sm font-medium">
+              Cancel
+            </button>
+            <button
+              onClick={() => { setExercises([]); setConfirmClearExercises(false); }}
               className="flex-1 py-2.5 rounded-lg bg-red-500/20 text-red-400 text-sm font-semibold"
             >
               Delete All
