@@ -1,0 +1,1861 @@
+{
+  "exercises": [
+    {
+      "id": "imp_ex_hammer_curl_anarchy",
+      "baseName": "Dumbbell Hammer Curl",
+      "equipment": "Anarchy",
+      "name": "Dumbbell Hammer Curl (Anarchy)",
+      "muscles": [
+        {
+          "group": "Arms",
+          "region": "Biceps"
+        },
+        {
+          "group": "Arms",
+          "region": "Forearms"
+        }
+      ]
+    },
+    {
+      "id": "imp_ex_tricep_ext_atlantis",
+      "baseName": "Overhead Tricep Extension",
+      "equipment": "Atlantis",
+      "name": "Overhead Tricep Extension (Atlantis)",
+      "muscles": [
+        {
+          "group": "Arms",
+          "region": "Triceps"
+        }
+      ]
+    },
+    {
+      "id": "imp_ex_incline_bench_smith",
+      "baseName": "Incline Bench Press",
+      "equipment": "Smith Machine",
+      "name": "Incline Bench Press (Smith Machine)",
+      "muscles": [
+        {
+          "group": "Chest",
+          "region": "Upper Chest"
+        },
+        {
+          "group": "Shoulders",
+          "region": "Front Delts"
+        },
+        {
+          "group": "Arms",
+          "region": "Triceps"
+        }
+      ]
+    },
+    {
+      "id": "imp_ex_arm_curl_panatta",
+      "baseName": "Arm Curl Machine",
+      "equipment": "Panatta",
+      "name": "Arm Curl Machine (Panatta)",
+      "muscles": [
+        {
+          "group": "Arms",
+          "region": "Biceps"
+        }
+      ]
+    },
+    {
+      "id": "imp_ex_multiflight_panatta",
+      "baseName": "Standing Multi Flight",
+      "equipment": "Panatta",
+      "name": "Standing Multi Flight (Panatta)",
+      "muscles": [
+        {
+          "group": "Shoulders",
+          "region": "Side Delts"
+        },
+        {
+          "group": "Shoulders",
+          "region": "Rear Delts"
+        }
+      ]
+    },
+    {
+      "id": "imp_ex_rope_hammer_atlantis",
+      "baseName": "Rope Hammer Curl",
+      "equipment": "Atlantis",
+      "name": "Rope Hammer Curl (Atlantis)",
+      "muscles": [
+        {
+          "group": "Arms",
+          "region": "Biceps"
+        },
+        {
+          "group": "Arms",
+          "region": "Forearms"
+        }
+      ]
+    },
+    {
+      "id": "imp_ex_arm_ext_cybex",
+      "baseName": "Arm Extension",
+      "equipment": "Cybex",
+      "name": "Arm Extension (Cybex)",
+      "muscles": [
+        {
+          "group": "Arms",
+          "region": "Triceps"
+        }
+      ]
+    },
+    {
+      "id": "imp_ex_dual_cable_curl_anarchy",
+      "baseName": "Dual Cable Curl",
+      "equipment": "Anarchy",
+      "name": "Dual Cable Curl (Anarchy)",
+      "muscles": [
+        {
+          "group": "Arms",
+          "region": "Biceps"
+        }
+      ]
+    },
+    {
+      "id": "imp_ex_rdl_anarchy",
+      "baseName": "RDL Machine",
+      "equipment": "Anarchy",
+      "name": "RDL Machine (Anarchy)",
+      "muscles": [
+        {
+          "group": "Legs",
+          "region": "Hamstrings"
+        },
+        {
+          "group": "Legs",
+          "region": "Glutes"
+        }
+      ]
+    },
+    {
+      "id": "imp_ex_pendulum_squat",
+      "baseName": "Pendulum Squat",
+      "equipment": "",
+      "name": "Pendulum Squat",
+      "muscles": [
+        {
+          "group": "Legs",
+          "region": "Quads"
+        },
+        {
+          "group": "Legs",
+          "region": "Glutes"
+        }
+      ]
+    },
+    {
+      "id": "imp_ex_seated_leg_curl_panatta",
+      "baseName": "Seated Leg Curl",
+      "equipment": "Panatta",
+      "name": "Seated Leg Curl (Panatta)",
+      "muscles": [
+        {
+          "group": "Legs",
+          "region": "Hamstrings"
+        }
+      ]
+    },
+    {
+      "id": "imp_ex_leg_ext_prime",
+      "baseName": "Leg Extension",
+      "equipment": "Prime",
+      "name": "Leg Extension (Prime)",
+      "muscles": [
+        {
+          "group": "Legs",
+          "region": "Quads"
+        }
+      ]
+    },
+    {
+      "id": "imp_ex_chest_fly_anarchy",
+      "baseName": "Chest Fly",
+      "equipment": "Anarchy",
+      "name": "Chest Fly (Anarchy)",
+      "muscles": [
+        {
+          "group": "Chest",
+          "region": "Mid Chest"
+        },
+        {
+          "group": "Shoulders",
+          "region": "Front Delts"
+        }
+      ]
+    },
+    {
+      "id": "imp_ex_lateral_raise_arsenal",
+      "baseName": "Lateral Raise Machine",
+      "equipment": "Arsenal",
+      "name": "Lateral Raise Machine (Arsenal)",
+      "muscles": [
+        {
+          "group": "Shoulders",
+          "region": "Side Delts"
+        }
+      ]
+    },
+    {
+      "id": "imp_ex_preacher_hammer_anarchy",
+      "baseName": "Preacher Hammer Curl",
+      "equipment": "Anarchy",
+      "name": "Preacher Hammer Curl (Anarchy)",
+      "muscles": [
+        {
+          "group": "Arms",
+          "region": "Biceps"
+        },
+        {
+          "group": "Arms",
+          "region": "Forearms"
+        }
+      ]
+    },
+    {
+      "id": "imp_ex_incline_press_anarchy",
+      "baseName": "Incline Press Machine",
+      "equipment": "Anarchy",
+      "name": "Incline Press Machine (Anarchy)",
+      "muscles": [
+        {
+          "group": "Chest",
+          "region": "Upper Chest"
+        },
+        {
+          "group": "Shoulders",
+          "region": "Front Delts"
+        },
+        {
+          "group": "Arms",
+          "region": "Triceps"
+        }
+      ]
+    },
+    {
+      "id": "imp_ex_rowing_circular_panatta",
+      "baseName": "Rowing Machine Circular",
+      "equipment": "Panatta",
+      "name": "Rowing Machine Circular (Panatta)",
+      "muscles": [
+        {
+          "group": "Back",
+          "region": "Lats"
+        },
+        {
+          "group": "Back",
+          "region": "Upper Back/Traps"
+        }
+      ]
+    },
+    {
+      "id": "imp_ex_chest_fly_anarchy_plate",
+      "baseName": "Chest Fly",
+      "equipment": "Anarchy Plate Loaded",
+      "name": "Chest Fly (Anarchy Plate Loaded)",
+      "muscles": [
+        {
+          "group": "Chest",
+          "region": "Mid Chest"
+        },
+        {
+          "group": "Shoulders",
+          "region": "Front Delts"
+        }
+      ]
+    },
+    {
+      "id": "imp_ex_arm_ext_panatta",
+      "baseName": "Arm Extension Machine",
+      "equipment": "Panatta",
+      "name": "Arm Extension Machine (Panatta)",
+      "muscles": [
+        {
+          "group": "Arms",
+          "region": "Triceps"
+        }
+      ]
+    },
+    {
+      "id": "imp_ex_lateral_raise_cable",
+      "baseName": "Lateral Raise",
+      "equipment": "Cable",
+      "name": "Lateral Raise (Cable)",
+      "muscles": [
+        {
+          "group": "Shoulders",
+          "region": "Side Delts"
+        }
+      ]
+    },
+    {
+      "id": "imp_ex_arm_curl_cybex",
+      "baseName": "Arm Curl Machine",
+      "equipment": "Cybex",
+      "name": "Arm Curl Machine (Cybex)",
+      "muscles": [
+        {
+          "group": "Arms",
+          "region": "Biceps"
+        }
+      ]
+    },
+    {
+      "id": "imp_ex_leg_ext_panatta",
+      "baseName": "Leg Extension",
+      "equipment": "Panatta",
+      "name": "Leg Extension (Panatta)",
+      "muscles": [
+        {
+          "group": "Legs",
+          "region": "Quads"
+        }
+      ]
+    }
+  ],
+  "sessions": [
+    {
+      "id": "imp2_s_20260814",
+      "date": "2026-08-14",
+      "name": "Afternoon Workout",
+      "exercises": [
+        {
+          "exerciseId": "imp_ex_multiflight_panatta",
+          "exerciseName": "Standing Multi Flight (Panatta)",
+          "sets": [
+            {
+              "weight": 121,
+              "reps": 9
+            },
+            {
+              "weight": 77,
+              "reps": 6
+            },
+            {
+              "weight": 121,
+              "reps": 8
+            },
+            {
+              "weight": 88,
+              "reps": 7
+            }
+          ]
+        },
+        {
+          "exerciseId": "imp_ex_rope_hammer_atlantis",
+          "exerciseName": "Rope Hammer Curl (Atlantis)",
+          "sets": [
+            {
+              "weight": 165,
+              "reps": 9
+            },
+            {
+              "weight": 120,
+              "reps": 8
+            },
+            {
+              "weight": 165,
+              "reps": 8
+            },
+            {
+              "weight": 120,
+              "reps": 7
+            }
+          ]
+        },
+        {
+          "exerciseId": "imp_ex_tricep_ext_atlantis",
+          "exerciseName": "Overhead Tricep Extension (Atlantis)",
+          "sets": [
+            {
+              "weight": 75,
+              "reps": 8
+            },
+            {
+              "weight": 45,
+              "reps": 8
+            },
+            {
+              "weight": 75,
+              "reps": 8
+            },
+            {
+              "weight": 45,
+              "reps": 7
+            }
+          ]
+        },
+        {
+          "exerciseId": "imp_ex_arm_curl_panatta",
+          "exerciseName": "Arm Curl Machine (Panatta)",
+          "sets": [
+            {
+              "weight": 121,
+              "reps": 8
+            },
+            {
+              "weight": 77,
+              "reps": 5
+            },
+            {
+              "weight": 121,
+              "reps": 6
+            },
+            {
+              "weight": 77,
+              "reps": 4
+            }
+          ]
+        },
+        {
+          "exerciseId": "imp_ex_arm_ext_cybex",
+          "exerciseName": "Arm Extension (Cybex)",
+          "sets": [
+            {
+              "weight": 130,
+              "reps": 9
+            },
+            {
+              "weight": 90,
+              "reps": 6
+            },
+            {
+              "weight": 130,
+              "reps": 6
+            },
+            {
+              "weight": 70,
+              "reps": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "imp2_s_20260812",
+      "date": "2026-08-12",
+      "name": "Afternoon Workout",
+      "exercises": [
+        {
+          "exerciseId": "imp_ex_rdl_anarchy",
+          "exerciseName": "RDL Machine (Anarchy)",
+          "sets": [
+            {
+              "weight": 310,
+              "reps": 7
+            },
+            {
+              "weight": 300,
+              "reps": 7
+            },
+            {
+              "weight": 300,
+              "reps": 5
+            }
+          ]
+        },
+        {
+          "exerciseId": "imp_ex_pendulum_squat",
+          "exerciseName": "Pendulum Squat",
+          "sets": [
+            {
+              "weight": 90,
+              "reps": 8
+            },
+            {
+              "weight": 90,
+              "reps": 7
+            },
+            {
+              "weight": 90,
+              "reps": 6
+            }
+          ]
+        },
+        {
+          "exerciseId": "imp_ex_seated_leg_curl_panatta",
+          "exerciseName": "Seated Leg Curl (Panatta)",
+          "sets": [
+            {
+              "weight": 132,
+              "reps": 8
+            },
+            {
+              "weight": 88,
+              "reps": 7
+            },
+            {
+              "weight": 132,
+              "reps": 7
+            },
+            {
+              "weight": 88,
+              "reps": 6
+            }
+          ]
+        },
+        {
+          "exerciseId": "imp_ex_leg_ext_prime",
+          "exerciseName": "Leg Extension (Prime)",
+          "sets": [
+            {
+              "weight": 210,
+              "reps": 9
+            },
+            {
+              "weight": 170,
+              "reps": 8
+            },
+            {
+              "weight": 210,
+              "reps": 8
+            },
+            {
+              "weight": 170,
+              "reps": 6
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "imp2_s_20260810",
+      "date": "2026-08-10",
+      "name": "Afternoon Workout",
+      "exercises": [
+        {
+          "exerciseId": "imp_ex_incline_bench_smith",
+          "exerciseName": "Incline Bench Press (Smith Machine)",
+          "sets": [
+            {
+              "weight": 170,
+              "reps": 5
+            },
+            {
+              "weight": 160,
+              "reps": 6
+            },
+            {
+              "weight": 150,
+              "reps": 5
+            }
+          ]
+        },
+        {
+          "exerciseId": "imp_ex_chest_fly_anarchy",
+          "exerciseName": "Chest Fly (Anarchy)",
+          "sets": [
+            {
+              "weight": 265,
+              "reps": 8
+            },
+            {
+              "weight": 220,
+              "reps": 5
+            },
+            {
+              "weight": 250,
+              "reps": 6
+            },
+            {
+              "weight": 190,
+              "reps": 6
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "imp2_s_20260807",
+      "date": "2026-08-07",
+      "name": "Afternoon Workout",
+      "exercises": [
+        {
+          "exerciseId": "imp_ex_lateral_raise_arsenal",
+          "exerciseName": "Lateral Raise Machine (Arsenal)",
+          "sets": [
+            {
+              "weight": 100,
+              "reps": 8
+            },
+            {
+              "weight": 50,
+              "reps": 6
+            },
+            {
+              "weight": 90,
+              "reps": 6
+            },
+            {
+              "weight": 50,
+              "reps": 6
+            }
+          ]
+        },
+        {
+          "exerciseId": "imp_ex_rope_hammer_atlantis",
+          "exerciseName": "Rope Hammer Curl (Atlantis)",
+          "sets": [
+            {
+              "weight": 155,
+              "reps": 9
+            },
+            {
+              "weight": 95,
+              "reps": 6
+            },
+            {
+              "weight": 155,
+              "reps": 6
+            },
+            {
+              "weight": 95,
+              "reps": 7
+            }
+          ]
+        },
+        {
+          "exerciseId": "imp_ex_arm_ext_cybex",
+          "exerciseName": "Arm Extension (Cybex)",
+          "sets": [
+            {
+              "weight": 130,
+              "reps": 8
+            },
+            {
+              "weight": 70,
+              "reps": 8
+            }
+          ]
+        },
+        {
+          "exerciseId": "imp_ex_dual_cable_curl_anarchy",
+          "exerciseName": "Dual Cable Curl (Anarchy)",
+          "sets": [
+            {
+              "weight": 37.5,
+              "reps": 7
+            },
+            {
+              "weight": 15,
+              "reps": 8
+            },
+            {
+              "weight": 37.5,
+              "reps": 6
+            },
+            {
+              "weight": 15,
+              "reps": 8
+            }
+          ]
+        },
+        {
+          "exerciseId": "imp_ex_tricep_ext_atlantis",
+          "exerciseName": "Overhead Tricep Extension (Atlantis)",
+          "sets": [
+            {
+              "weight": 70,
+              "reps": 10
+            },
+            {
+              "weight": 40,
+              "reps": 9
+            },
+            {
+              "weight": 75,
+              "reps": 7
+            },
+            {
+              "weight": 45,
+              "reps": 7
+            }
+          ]
+        },
+        {
+          "exerciseId": "imp_ex_arm_curl_panatta",
+          "exerciseName": "Arm Curl Machine (Panatta)",
+          "sets": [
+            {
+              "weight": 121,
+              "reps": 5
+            },
+            {
+              "weight": 77,
+              "reps": 6
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "imp2_s_20260802",
+      "date": "2026-08-02",
+      "name": "Afternoon Workout",
+      "exercises": [
+        {
+          "exerciseId": "imp_ex_rdl_anarchy",
+          "exerciseName": "RDL Machine (Anarchy)",
+          "sets": [
+            {
+              "weight": 300,
+              "reps": 9
+            },
+            {
+              "weight": 300,
+              "reps": 8
+            },
+            {
+              "weight": 300,
+              "reps": 7
+            }
+          ]
+        },
+        {
+          "exerciseId": "imp_ex_pendulum_squat",
+          "exerciseName": "Pendulum Squat",
+          "sets": [
+            {
+              "weight": 90,
+              "reps": 8
+            },
+            {
+              "weight": 90,
+              "reps": 7
+            },
+            {
+              "weight": 90,
+              "reps": 6
+            }
+          ]
+        },
+        {
+          "exerciseId": "imp_ex_seated_leg_curl_panatta",
+          "exerciseName": "Seated Leg Curl (Panatta)",
+          "sets": [
+            {
+              "weight": 121,
+              "reps": 9
+            },
+            {
+              "weight": 88,
+              "reps": 6
+            },
+            {
+              "weight": 121,
+              "reps": 8
+            },
+            {
+              "weight": 88,
+              "reps": 7
+            }
+          ]
+        },
+        {
+          "exerciseId": "imp_ex_leg_ext_prime",
+          "exerciseName": "Leg Extension (Prime)",
+          "sets": [
+            {
+              "weight": 210,
+              "reps": 8
+            },
+            {
+              "weight": 170,
+              "reps": 6
+            },
+            {
+              "weight": 170,
+              "reps": 7
+            },
+            {
+              "weight": 170,
+              "reps": 5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "imp2_s_20260731",
+      "date": "2026-07-31",
+      "name": "Afternoon Workout",
+      "exercises": [
+        {
+          "exerciseId": "imp_ex_preacher_hammer_anarchy",
+          "exerciseName": "Preacher Hammer Curl (Anarchy)",
+          "sets": [
+            {
+              "weight": 35,
+              "reps": 6
+            },
+            {
+              "weight": 30,
+              "reps": 8
+            },
+            {
+              "weight": 30,
+              "reps": 7
+            }
+          ]
+        },
+        {
+          "exerciseId": "imp_ex_tricep_ext_atlantis",
+          "exerciseName": "Overhead Tricep Extension (Atlantis)",
+          "sets": [
+            {
+              "weight": 70,
+              "reps": 8
+            },
+            {
+              "weight": 40,
+              "reps": 8
+            },
+            {
+              "weight": 70,
+              "reps": 7
+            },
+            {
+              "weight": 40,
+              "reps": 7
+            }
+          ]
+        },
+        {
+          "exerciseId": "imp_ex_arm_curl_panatta",
+          "exerciseName": "Arm Curl Machine (Panatta)",
+          "sets": [
+            {
+              "weight": 121,
+              "reps": 7
+            },
+            {
+              "weight": 88,
+              "reps": 5
+            },
+            {
+              "weight": 110,
+              "reps": 6
+            },
+            {
+              "weight": 66,
+              "reps": 5
+            }
+          ]
+        },
+        {
+          "exerciseId": "imp_ex_arm_ext_cybex",
+          "exerciseName": "Arm Extension (Cybex)",
+          "sets": [
+            {
+              "weight": 130,
+              "reps": 9
+            },
+            {
+              "weight": 90,
+              "reps": 8
+            },
+            {
+              "weight": 90,
+              "reps": 8
+            },
+            {
+              "weight": 90,
+              "reps": 8
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "imp2_s_20260728",
+      "date": "2026-07-28",
+      "name": "Afternoon Workout",
+      "exercises": [
+        {
+          "exerciseId": "imp_ex_incline_press_anarchy",
+          "exerciseName": "Incline Press Machine (Anarchy)",
+          "sets": [
+            {
+              "weight": 190,
+              "reps": 7
+            },
+            {
+              "weight": 180,
+              "reps": 9
+            },
+            {
+              "weight": 180,
+              "reps": 6
+            }
+          ]
+        },
+        {
+          "exerciseId": "imp_ex_chest_fly_anarchy",
+          "exerciseName": "Chest Fly (Anarchy)",
+          "sets": [
+            {
+              "weight": 265,
+              "reps": 8
+            },
+            {
+              "weight": 265,
+              "reps": 5
+            },
+            {
+              "weight": 235,
+              "reps": 6
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "imp2_s_20260717",
+      "date": "2026-07-17",
+      "name": "Afternoon Workout",
+      "exercises": [
+        {
+          "exerciseId": "imp_ex_seated_leg_curl_panatta",
+          "exerciseName": "Seated Leg Curl (Panatta)",
+          "sets": [
+            {
+              "weight": 121,
+              "reps": 8
+            },
+            {
+              "weight": 121,
+              "reps": 8
+            },
+            {
+              "weight": 121,
+              "reps": 7
+            },
+            {
+              "weight": 121,
+              "reps": 6
+            }
+          ]
+        },
+        {
+          "exerciseId": "imp_ex_leg_ext_prime",
+          "exerciseName": "Leg Extension (Prime)",
+          "sets": [
+            {
+              "weight": 210,
+              "reps": 8
+            },
+            {
+              "weight": 210,
+              "reps": 7
+            },
+            {
+              "weight": 210,
+              "reps": 6
+            },
+            {
+              "weight": 210,
+              "reps": 6
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "imp2_s_20260716",
+      "date": "2026-07-16",
+      "name": "Afternoon Workout",
+      "exercises": [
+        {
+          "exerciseId": "imp_ex_arm_curl_panatta",
+          "exerciseName": "Arm Curl Machine (Panatta)",
+          "sets": [
+            {
+              "weight": 121,
+              "reps": 7
+            },
+            {
+              "weight": 88,
+              "reps": 5
+            },
+            {
+              "weight": 110,
+              "reps": 6
+            },
+            {
+              "weight": 66,
+              "reps": 5
+            }
+          ]
+        },
+        {
+          "exerciseId": "imp_ex_multiflight_panatta",
+          "exerciseName": "Standing Multi Flight (Panatta)",
+          "sets": [
+            {
+              "weight": 121,
+              "reps": 11
+            }
+          ]
+        },
+        {
+          "exerciseId": "imp_ex_arm_ext_cybex",
+          "exerciseName": "Arm Extension (Cybex)",
+          "sets": [
+            {
+              "weight": 110,
+              "reps": 13
+            },
+            {
+              "weight": 70,
+              "reps": 9
+            },
+            {
+              "weight": 130,
+              "reps": 8
+            },
+            {
+              "weight": 90,
+              "reps": 6
+            }
+          ]
+        },
+        {
+          "exerciseId": "imp_ex_hammer_curl_anarchy",
+          "exerciseName": "Dumbbell Hammer Curl (Anarchy)",
+          "sets": [
+            {
+              "weight": 50,
+              "reps": 9
+            },
+            {
+              "weight": 35,
+              "reps": 8
+            },
+            {
+              "weight": 50,
+              "reps": 8
+            },
+            {
+              "weight": 35,
+              "reps": 6
+            }
+          ]
+        },
+        {
+          "exerciseId": "imp_ex_tricep_ext_atlantis",
+          "exerciseName": "Overhead Tricep Extension (Atlantis)",
+          "sets": [
+            {
+              "weight": 65,
+              "reps": 8
+            },
+            {
+              "weight": 35,
+              "reps": 8
+            },
+            {
+              "weight": 65,
+              "reps": 7
+            },
+            {
+              "weight": 35,
+              "reps": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "imp2_s_20260714",
+      "date": "2026-07-14",
+      "name": "Afternoon Workout",
+      "exercises": [
+        {
+          "exerciseId": "imp_ex_incline_bench_smith",
+          "exerciseName": "Incline Bench Press (Smith Machine)",
+          "sets": [
+            {
+              "weight": 160,
+              "reps": 9
+            },
+            {
+              "weight": 160,
+              "reps": 8
+            },
+            {
+              "weight": 160,
+              "reps": 7
+            }
+          ]
+        },
+        {
+          "exerciseId": "imp_ex_rowing_circular_panatta",
+          "exerciseName": "Rowing Machine Circular (Panatta)",
+          "sets": [
+            {
+              "weight": 209,
+              "reps": 8
+            },
+            {
+              "weight": 209,
+              "reps": 6
+            }
+          ]
+        },
+        {
+          "exerciseId": "imp_ex_chest_fly_anarchy",
+          "exerciseName": "Chest Fly (Anarchy)",
+          "sets": [
+            {
+              "weight": 265,
+              "reps": 8
+            },
+            {
+              "weight": 265,
+              "reps": 6
+            },
+            {
+              "weight": 250,
+              "reps": 6
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "imp2_s_20260711",
+      "date": "2026-07-11",
+      "name": "Afternoon Workout",
+      "exercises": [
+        {
+          "exerciseId": "imp_ex_rdl_anarchy",
+          "exerciseName": "RDL Machine (Anarchy)",
+          "sets": [
+            {
+              "weight": 300,
+              "reps": 9
+            },
+            {
+              "weight": 300,
+              "reps": 7
+            },
+            {
+              "weight": 300,
+              "reps": 5
+            }
+          ]
+        },
+        {
+          "exerciseId": "imp_ex_multiflight_panatta",
+          "exerciseName": "Standing Multi Flight (Panatta)",
+          "sets": [
+            {
+              "weight": 121,
+              "reps": 10
+            },
+            {
+              "weight": 121,
+              "reps": 8
+            }
+          ]
+        },
+        {
+          "exerciseId": "imp_ex_pendulum_squat",
+          "exerciseName": "Pendulum Squat",
+          "sets": [
+            {
+              "weight": 95,
+              "reps": 5
+            },
+            {
+              "weight": 80,
+              "reps": 7
+            },
+            {
+              "weight": 80,
+              "reps": 5
+            }
+          ]
+        },
+        {
+          "exerciseId": "imp_ex_seated_leg_curl_panatta",
+          "exerciseName": "Seated Leg Curl (Panatta)",
+          "sets": [
+            {
+              "weight": 176,
+              "reps": 12
+            },
+            {
+              "weight": 143,
+              "reps": 8
+            },
+            {
+              "weight": 176,
+              "reps": 8
+            },
+            {
+              "weight": 143,
+              "reps": 5
+            }
+          ]
+        },
+        {
+          "exerciseId": "imp_ex_leg_ext_panatta",
+          "exerciseName": "Leg Extension (Panatta)",
+          "sets": [
+            {
+              "weight": 220,
+              "reps": 12
+            },
+            {
+              "weight": 176,
+              "reps": 9
+            },
+            {
+              "weight": 220,
+              "reps": 10
+            },
+            {
+              "weight": 176,
+              "reps": 6
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "imp2_s_20260701",
+      "date": "2026-07-01",
+      "name": "Evening Workout",
+      "exercises": [
+        {
+          "exerciseId": "imp_ex_lateral_raise_cable",
+          "exerciseName": "Lateral Raise (Cable)",
+          "sets": [
+            {
+              "weight": 30,
+              "reps": 9
+            },
+            {
+              "weight": 30,
+              "reps": 8
+            },
+            {
+              "weight": 30,
+              "reps": 7
+            }
+          ]
+        },
+        {
+          "exerciseId": "imp_ex_arm_curl_panatta",
+          "exerciseName": "Arm Curl Machine (Panatta)",
+          "sets": [
+            {
+              "weight": 110,
+              "reps": 8
+            },
+            {
+              "weight": 110,
+              "reps": 6
+            },
+            {
+              "weight": 77,
+              "reps": 5
+            }
+          ]
+        },
+        {
+          "exerciseId": "imp_ex_tricep_ext_atlantis",
+          "exerciseName": "Overhead Tricep Extension (Atlantis)",
+          "sets": [
+            {
+              "weight": 65,
+              "reps": 7
+            },
+            {
+              "weight": 65,
+              "reps": 7
+            }
+          ]
+        },
+        {
+          "exerciseId": "imp_ex_arm_curl_cybex",
+          "exerciseName": "Arm Curl Machine (Cybex)",
+          "sets": [
+            {
+              "weight": 110,
+              "reps": 6
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "imp2_s_20260629",
+      "date": "2026-06-29",
+      "name": "Afternoon Workout",
+      "exercises": [
+        {
+          "exerciseId": "imp_ex_incline_bench_smith",
+          "exerciseName": "Incline Bench Press (Smith Machine)",
+          "sets": [
+            {
+              "weight": 150,
+              "reps": 10
+            },
+            {
+              "weight": 150,
+              "reps": 9
+            },
+            {
+              "weight": 150,
+              "reps": 7
+            }
+          ]
+        },
+        {
+          "exerciseId": "imp_ex_rowing_circular_panatta",
+          "exerciseName": "Rowing Machine Circular (Panatta)",
+          "sets": [
+            {
+              "weight": 198,
+              "reps": 9
+            },
+            {
+              "weight": 198,
+              "reps": 8
+            },
+            {
+              "weight": 198,
+              "reps": 7
+            }
+          ]
+        },
+        {
+          "exerciseId": "imp_ex_chest_fly_anarchy_plate",
+          "exerciseName": "Chest Fly (Anarchy Plate Loaded)",
+          "sets": [
+            {
+              "weight": 160,
+              "reps": 8
+            },
+            {
+              "weight": 160,
+              "reps": 7
+            },
+            {
+              "weight": 160,
+              "reps": 5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "imp2_s_20260626",
+      "date": "2026-06-26",
+      "name": "Midday Workout",
+      "exercises": [
+        {
+          "exerciseId": "imp_ex_lateral_raise_arsenal",
+          "exerciseName": "Lateral Raise Machine (Arsenal)",
+          "sets": [
+            {
+              "weight": 90,
+              "reps": 8
+            },
+            {
+              "weight": 90,
+              "reps": 7
+            },
+            {
+              "weight": 90,
+              "reps": 6
+            }
+          ]
+        },
+        {
+          "exerciseId": "imp_ex_arm_ext_panatta",
+          "exerciseName": "Arm Extension Machine (Panatta)",
+          "sets": [
+            {
+              "weight": 121,
+              "reps": 7
+            }
+          ]
+        },
+        {
+          "exerciseId": "imp_ex_arm_ext_cybex",
+          "exerciseName": "Arm Extension (Cybex)",
+          "sets": [
+            {
+              "weight": 110,
+              "reps": 7
+            },
+            {
+              "weight": 110,
+              "reps": 9
+            }
+          ]
+        },
+        {
+          "exerciseId": "imp_ex_arm_curl_panatta",
+          "exerciseName": "Arm Curl Machine (Panatta)",
+          "sets": [
+            {
+              "weight": 110,
+              "reps": 9
+            },
+            {
+              "weight": 110,
+              "reps": 6
+            },
+            {
+              "weight": 90,
+              "reps": 7
+            }
+          ]
+        },
+        {
+          "exerciseId": "imp_ex_tricep_ext_atlantis",
+          "exerciseName": "Overhead Tricep Extension (Atlantis)",
+          "sets": [
+            {
+              "weight": 60,
+              "reps": 8
+            },
+            {
+              "weight": 60,
+              "reps": 8
+            },
+            {
+              "weight": 60,
+              "reps": 7
+            }
+          ]
+        },
+        {
+          "exerciseId": "imp_ex_hammer_curl_anarchy",
+          "exerciseName": "Dumbbell Hammer Curl (Anarchy)",
+          "sets": [
+            {
+              "weight": 50,
+              "reps": 8
+            },
+            {
+              "weight": 35,
+              "reps": 8
+            },
+            {
+              "weight": 50,
+              "reps": 7
+            },
+            {
+              "weight": 35,
+              "reps": 6
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "imp2_s_20260624",
+      "date": "2026-06-24",
+      "name": "Evening Workout",
+      "exercises": [
+        {
+          "exerciseId": "imp_ex_incline_press_anarchy",
+          "exerciseName": "Incline Press Machine (Anarchy)",
+          "sets": [
+            {
+              "weight": 180,
+              "reps": 9
+            },
+            {
+              "weight": 180,
+              "reps": 8
+            },
+            {
+              "weight": 180,
+              "reps": 6
+            }
+          ]
+        },
+        {
+          "exerciseId": "imp_ex_rowing_circular_panatta",
+          "exerciseName": "Rowing Machine Circular (Panatta)",
+          "sets": [
+            {
+              "weight": 198,
+              "reps": 9
+            },
+            {
+              "weight": 198,
+              "reps": 8
+            },
+            {
+              "weight": 198,
+              "reps": 7
+            }
+          ]
+        },
+        {
+          "exerciseId": "imp_ex_chest_fly_anarchy_plate",
+          "exerciseName": "Chest Fly (Anarchy Plate Loaded)",
+          "sets": [
+            {
+              "weight": 140,
+              "reps": 10
+            },
+            {
+              "weight": 160,
+              "reps": 7
+            },
+            {
+              "weight": 160,
+              "reps": 5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "imp2_s_20260620",
+      "date": "2026-06-20",
+      "name": "Morning Workout",
+      "exercises": [
+        {
+          "exerciseId": "imp_ex_rdl_anarchy",
+          "exerciseName": "RDL Machine (Anarchy)",
+          "sets": [
+            {
+              "weight": 300,
+              "reps": 8
+            },
+            {
+              "weight": 300,
+              "reps": 7
+            },
+            {
+              "weight": 300,
+              "reps": 6
+            }
+          ]
+        },
+        {
+          "exerciseId": "imp_ex_pendulum_squat",
+          "exerciseName": "Pendulum Squat",
+          "sets": [
+            {
+              "weight": 95,
+              "reps": 7
+            },
+            {
+              "weight": 90,
+              "reps": 7
+            },
+            {
+              "weight": 90,
+              "reps": 6
+            }
+          ]
+        },
+        {
+          "exerciseId": "imp_ex_seated_leg_curl_panatta",
+          "exerciseName": "Seated Leg Curl (Panatta)",
+          "sets": [
+            {
+              "weight": 176,
+              "reps": 11
+            },
+            {
+              "weight": 143,
+              "reps": 8
+            },
+            {
+              "weight": 176,
+              "reps": 10
+            },
+            {
+              "weight": 143,
+              "reps": 7
+            }
+          ]
+        },
+        {
+          "exerciseId": "imp_ex_leg_ext_panatta",
+          "exerciseName": "Leg Extension (Panatta)",
+          "sets": [
+            {
+              "weight": 220,
+              "reps": 11
+            },
+            {
+              "weight": 176,
+              "reps": 8
+            },
+            {
+              "weight": 176,
+              "reps": 10
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "imp2_s_20260613",
+      "date": "2026-06-13",
+      "name": "Afternoon Workout",
+      "exercises": [
+        {
+          "exerciseId": "imp_ex_rdl_anarchy",
+          "exerciseName": "RDL Machine (Anarchy)",
+          "sets": [
+            {
+              "weight": 300,
+              "reps": 7
+            },
+            {
+              "weight": 290,
+              "reps": 7
+            },
+            {
+              "weight": 290,
+              "reps": 6
+            }
+          ]
+        },
+        {
+          "exerciseId": "imp_ex_pendulum_squat",
+          "exerciseName": "Pendulum Squat",
+          "sets": [
+            {
+              "weight": 90,
+              "reps": 9
+            },
+            {
+              "weight": 90,
+              "reps": 7
+            },
+            {
+              "weight": 90,
+              "reps": 6
+            }
+          ]
+        },
+        {
+          "exerciseId": "imp_ex_seated_leg_curl_panatta",
+          "exerciseName": "Seated Leg Curl (Panatta)",
+          "sets": [
+            {
+              "weight": 176,
+              "reps": 10
+            },
+            {
+              "weight": 143,
+              "reps": 7
+            },
+            {
+              "weight": 176,
+              "reps": 9
+            },
+            {
+              "weight": 143,
+              "reps": 7
+            }
+          ]
+        },
+        {
+          "exerciseId": "imp_ex_leg_ext_panatta",
+          "exerciseName": "Leg Extension (Panatta)",
+          "sets": [
+            {
+              "weight": 220,
+              "reps": 10
+            },
+            {
+              "weight": 176,
+              "reps": 7
+            },
+            {
+              "weight": 176,
+              "reps": 9
+            },
+            {
+              "weight": 176,
+              "reps": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "imp2_s_20260611",
+      "date": "2026-06-11",
+      "name": "Evening Workout",
+      "exercises": [
+        {
+          "exerciseId": "imp_ex_hammer_curl_anarchy",
+          "exerciseName": "Dumbbell Hammer Curl (Anarchy)",
+          "sets": [
+            {
+              "weight": 50,
+              "reps": 8
+            },
+            {
+              "weight": 50,
+              "reps": 7
+            },
+            {
+              "weight": 50,
+              "reps": 6
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "imp2_s_20260603",
+      "date": "2026-06-03",
+      "name": "Afternoon Workout",
+      "exercises": [
+        {
+          "exerciseId": "imp_ex_arm_curl_panatta",
+          "exerciseName": "Arm Curl Machine (Panatta)",
+          "sets": [
+            {
+              "weight": 110,
+              "reps": 8
+            },
+            {
+              "weight": 110,
+              "reps": 7
+            },
+            {
+              "weight": 110,
+              "reps": 5
+            }
+          ]
+        },
+        {
+          "exerciseId": "imp_ex_multiflight_panatta",
+          "exerciseName": "Standing Multi Flight (Panatta)",
+          "sets": [
+            {
+              "weight": 121,
+              "reps": 10
+            },
+            {
+              "weight": 121,
+              "reps": 9
+            },
+            {
+              "weight": 121,
+              "reps": 8
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "imp2_s_20260601",
+      "date": "2026-06-01",
+      "name": "Afternoon Workout",
+      "exercises": [
+        {
+          "exerciseId": "imp_ex_incline_bench_smith",
+          "exerciseName": "Incline Bench Press (Smith Machine)",
+          "sets": [
+            {
+              "weight": 140,
+              "reps": 8
+            },
+            {
+              "weight": 140,
+              "reps": 7
+            },
+            {
+              "weight": 140,
+              "reps": 6
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "imp2_s_20260302",
+      "date": "2026-03-02",
+      "name": "Midday Workout",
+      "exercises": [
+        {
+          "exerciseId": "imp_ex_incline_bench_smith",
+          "exerciseName": "Incline Bench Press (Smith Machine)",
+          "sets": [
+            {
+              "weight": 140,
+              "reps": 11
+            },
+            {
+              "weight": 160,
+              "reps": 6
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "imp2_s_20250717",
+      "date": "2025-07-17",
+      "name": "Afternoon Workout",
+      "exercises": [
+        {
+          "exerciseId": "imp_ex_arm_curl_panatta",
+          "exerciseName": "Arm Curl Machine (Panatta)",
+          "sets": [
+            {
+              "weight": 110,
+              "reps": 9
+            },
+            {
+              "weight": 110,
+              "reps": 7
+            },
+            {
+              "weight": 99,
+              "reps": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "imp2_s_20251223",
+      "date": "2025-12-23",
+      "name": "Afternoon Workout",
+      "exercises": [
+        {
+          "exerciseId": "imp_ex_multiflight_panatta",
+          "exerciseName": "Standing Multi Flight (Panatta)",
+          "sets": [
+            {
+              "weight": 121,
+              "reps": 8
+            },
+            {
+              "weight": 121,
+              "reps": 10
+            },
+            {
+              "weight": 121,
+              "reps": 9
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
