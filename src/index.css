@@ -5,3 +5,14 @@
 html, body, #root {
   height: 100%;
 }
+
+/* Numeric inputs are custom-styled (centered, narrow) throughout the app —
+   native spinner arrows eat into that width and clip the value visually. */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}

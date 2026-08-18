@@ -1,6 +1,6 @@
 -- Key/value persistence for the workout tracker.
 -- One row per (user, key), where key is one of:
---   exercises | sessions | food-log | daily-targets | cardio-log | draft-session
+--   exercises | sessions | food-log | daily-targets | cardio-log | workout-templates | draft-session
 -- (see DATA_MODEL.md for the shape of each key's value).
 
 create table if not exists public.app_state (

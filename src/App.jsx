@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   Dumbbell, TrendingUp, UtensilsCrossed, Plus, X,
   ChevronLeft, ChevronRight, Trash2, Settings, Check, Loader2, ChevronDown,
-  ChevronUp, Pencil, Flame, Target, Mountain, Footprints, Timer
+  ChevronUp, Pencil, Mountain, Footprints, Timer, Trophy, Calculator,
+  Bookmark, LayoutTemplate
 } from "lucide-react";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
@@ -45,6 +46,40 @@ function fmtDate(d) {
   return date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
 }
 
+// ---------- Personal records ----------
+
+function getBestWeightForExercise(sessions, exerciseId, excludeSessionId) {
+  let best = 0;
+  sessions.forEach((s) => {
+    if (s.id === excludeSessionId) return;
+    s.exercises.forEach((e) => {
+      if (e.exerciseId !== exerciseId) return;
+      e.sets.forEach((st) => {
+        const w = Number(st.weight) || 0;
+        if (w > best) best = w;
+      });
+    });
+  });
+  return best;
+}
+
+// ---------- Plate calculator ----------
+
+const PLATE_WEIGHTS = [45, 35, 25, 10, 5, 2.5];
+const BAR_WEIGHTS = [45, 35, 15];
+
+function calcPlates(targetWeight, barWeight) {
+  let perSide = Math.max(0, (Number(targetWeight) - Number(barWeight)) / 2);
+  const plates = [];
+  for (const p of PLATE_WEIGHTS) {
+    while (perSide >= p - 0.001) {
+      plates.push(p);
+      perSide -= p;
+    }
+  }
+  return { plates, remainder: Math.round(perSide * 100) / 100 };
+}
+
 function exportBackup(data) {
   try {
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
@@ -71,6 +106,7 @@ export default function WorkoutFoodApp() {
   const [foodLog, setFoodLog] = useState([]);
   const [targets, setTargets] = useState({ calories: 2400, protein: 180, carbs: 250, fat: 70 });
   const [cardioLog, setCardioLog] = useState([]);
+  const [templates, setTemplates] = useState([]);
 
   const [loadFailed, setLoadFailed] = useState(false);
   const [loadAttempt, setLoadAttempt] = useState(0);
@@ -79,12 +115,13 @@ export default function WorkoutFoodApp() {
     let cancelled = false;
     setReady(false);
     (async () => {
-      const [ex, se, fl, tg, cl] = await Promise.all([
+      const [ex, se, fl, tg, cl, tp] = await Promise.all([
         loadKey("exercises", []),
         loadKey("sessions", []),
         loadKey("food-log", []),
         loadKey("daily-targets", { calories: 2400, protein: 180, carbs: 250, fat: 70 }),
         loadKey("cardio-log", []),
+        loadKey("workout-templates", []),
       ]);
       if (cancelled) return;
       setExercises(ex.value);
@@ -92,7 +129,8 @@ export default function WorkoutFoodApp() {
       setFoodLog(fl.value);
       setTargets(tg.value);
       setCardioLog(cl.value);
-      setLoadFailed([ex, se, fl, tg, cl].some((r) => r.failed));
+      setTemplates(tp.value);
+      setLoadFailed([ex, se, fl, tg, cl, tp].some((r) => r.failed));
       setReady(true);
     })();
     return () => { cancelled = true; };
@@ -120,6 +158,7 @@ export default function WorkoutFoodApp() {
     foodLog: (v) => persistAndSave(setFoodLog, "food-log", v),
     targets: (v) => persistAndSave(setTargets, "daily-targets", v),
     cardioLog: (v) => persistAndSave(setCardioLog, "cardio-log", v),
+    templates: (v) => persistAndSave(setTemplates, "workout-templates", v),
   };
 
   const activeAccent = TABS.find((t) => t.id === activeTab)?.accent || "#059669";
@@ -169,7 +208,14 @@ export default function WorkoutFoodApp() {
 
       <main className="flex-1 overflow-y-auto px-4 pt-3 pb-24">
         {activeTab === "workouts" && (
-          <WorkoutsTab exercises={exercises} setExercises={persist.exercises} sessions={sessions} setSessions={persist.sessions} />
+          <WorkoutsTab
+            exercises={exercises}
+            setExercises={persist.exercises}
+            sessions={sessions}
+            setSessions={persist.sessions}
+            templates={templates}
+            setTemplates={persist.templates}
+          />
         )}
         {activeTab === "progress" && <ProgressTab exercises={exercises} sessions={sessions} />}
         {activeTab === "cardio" && <CardioTab cardioLog={cardioLog} setCardioLog={persist.cardioLog} />}
@@ -206,12 +252,13 @@ function emptyDraft() {
   return { id: uid(), date: todayStr(), name: "", exercises: [] };
 }
 
-function WorkoutsTab({ exercises, setExercises, sessions, setSessions }) {
+function WorkoutsTab({ exercises, setExercises, sessions, setSessions, templates, setTemplates }) {
   const [draft, setDraft] = useState(null); // null = not editing
   const [editingOriginalId, setEditingOriginalId] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [draftRestored, setDraftRestored] = useState(false);
+  const [templatePickerOpen, setTemplatePickerOpen] = useState(false);
   const draftLoadedRef = useRef(false);
 
   // Restore any in-progress workout draft on mount, so leaving mid-workout never loses it.
@@ -240,6 +287,29 @@ function WorkoutsTab({ exercises, setExercises, sessions, setSessions }) {
   const startNew = () => { setDraft(emptyDraft()); setEditingOriginalId(null); setDraftRestored(false); };
   const startEdit = (session) => { setDraft(JSON.parse(JSON.stringify(session))); setEditingOriginalId(session.id); setExpandedId(null); setDraftRestored(false); };
   const cancelDraft = () => { setDraft(null); setEditingOriginalId(null); setDraftRestored(false); };
+
+  const startFromTemplate = (template) => {
+    setDraft({
+      id: uid(),
+      date: todayStr(),
+      name: template.name,
+      exercises: template.exercises.map((e) => ({ exerciseId: e.exerciseId, exerciseName: e.exerciseName, sets: [{ weight: "", reps: "" }] })),
+    });
+    setEditingOriginalId(null);
+    setDraftRestored(false);
+    setTemplatePickerOpen(false);
+  };
+
+  const saveTemplate = (name, exercisesList) => {
+    const template = {
+      id: uid(),
+      name,
+      exercises: exercisesList.map((e) => ({ exerciseId: e.exerciseId, exerciseName: e.exerciseName })),
+    };
+    setTemplates([...templates, template]);
+  };
+
+  const deleteTemplate = (id) => setTemplates(templates.filter((t) => t.id !== id));
 
   const saveDraft = () => {
     const cleaned = { ...draft, exercises: draft.exercises.filter((e) => e.sets.length > 0) };
@@ -315,8 +385,11 @@ function WorkoutsTab({ exercises, setExercises, sessions, setSessions }) {
           setDraft={setDraft}
           exercises={exercises}
           setExercises={setExercises}
+          sessions={sessions}
+          editingOriginalId={editingOriginalId}
           onCancel={cancelDraft}
           onSave={saveDraft}
+          onSaveTemplate={saveTemplate}
           isEditing={!!editingOriginalId}
         />
       </div>
@@ -340,6 +413,24 @@ function WorkoutsTab({ exercises, setExercises, sessions, setSessions }) {
         </button>
         <input ref={importInputRef} type="file" accept="application/json" className="hidden" onChange={onImportFileChange} />
       </div>
+
+      {templates.length > 0 && (
+        <button
+          onClick={() => setTemplatePickerOpen(true)}
+          className="w-full py-2.5 rounded-xl border border-dashed border-neutral-300 text-neutral-600 text-sm font-medium flex items-center justify-center gap-1.5 active:bg-white"
+        >
+          <LayoutTemplate size={16} /> Start from Template
+        </button>
+      )}
+
+      {templatePickerOpen && (
+        <TemplatePickerSheet
+          templates={templates}
+          onPick={startFromTemplate}
+          onDelete={deleteTemplate}
+          onClose={() => setTemplatePickerOpen(false)}
+        />
+      )}
 
       {sessions.length > 0 && !confirmClearAll && (
         <button onClick={() => setConfirmClearAll(true)} className="text-xs text-neutral-400 active:text-red-600">
@@ -453,8 +544,55 @@ function WorkoutsTab({ exercises, setExercises, sessions, setSessions }) {
   );
 }
 
-function SessionEditor({ draft, setDraft, exercises, setExercises, onCancel, onSave, isEditing }) {
+function TemplatePickerSheet({ templates, onPick, onDelete, onClose }) {
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+
+  return (
+    <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/60" onClick={onClose}>
+      <div className="bg-white border-t border-neutral-200 rounded-t-2xl w-full max-w-md p-4 space-y-3 max-h-[75vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between">
+          <p className="font-semibold">Start from Template</p>
+          <button onClick={onClose} className="p-1 text-neutral-400"><X size={20} /></button>
+        </div>
+        <div className="space-y-2">
+          {templates.map((t) => (
+            <div key={t.id} className="bg-neutral-100 rounded-xl p-3 flex items-center justify-between gap-2">
+              <button onClick={() => onPick(t)} className="flex-1 text-left">
+                <p className="font-medium text-sm text-neutral-900">{t.name}</p>
+                <p className="text-xs text-neutral-500">{t.exercises.length} exercises</p>
+              </button>
+              {confirmDeleteId === t.id ? (
+                <button
+                  onClick={() => { onDelete(t.id); setConfirmDeleteId(null); }}
+                  className="text-xs text-red-600 font-medium px-2 py-1 shrink-0"
+                >
+                  Confirm
+                </button>
+              ) : (
+                <button onClick={() => setConfirmDeleteId(t.id)} className="p-1.5 text-neutral-400 active:text-red-600 shrink-0">
+                  <Trash2 size={16} />
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SessionEditor({ draft, setDraft, exercises, setExercises, sessions, editingOriginalId, onCancel, onSave, onSaveTemplate, isEditing }) {
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [restSeconds, setRestSeconds] = useState(null);
+  const [savingTemplate, setSavingTemplate] = useState(false);
+  const [templateName, setTemplateName] = useState("");
+  const [plateCalcFor, setPlateCalcFor] = useState(null); // { exerciseName, weight } | null
+
+  useEffect(() => {
+    if (restSeconds === null || restSeconds <= 0) return;
+    const t = setTimeout(() => setRestSeconds((s) => s - 1), 1000);
+    return () => clearTimeout(t);
+  }, [restSeconds]);
 
   const addExerciseToSession = (exDef) => {
     setDraft({
@@ -479,6 +617,7 @@ function SessionEditor({ draft, setDraft, exercises, setExercises, onCancel, onS
     const last = next[exIdx].sets[next[exIdx].sets.length - 1];
     next[exIdx] = { ...next[exIdx], sets: [...next[exIdx].sets, { weight: last?.weight || "", reps: last?.reps || "" }] };
     setDraft({ ...draft, exercises: next });
+    setRestSeconds(90);
   };
 
   const removeSet = (exIdx, setIdx) => {
@@ -487,8 +626,19 @@ function SessionEditor({ draft, setDraft, exercises, setExercises, onCancel, onS
     setDraft({ ...draft, exercises: next });
   };
 
+  const confirmSaveTemplate = () => {
+    if (!templateName.trim()) return;
+    onSaveTemplate(templateName.trim(), draft.exercises);
+    setSavingTemplate(false);
+    setTemplateName("");
+  };
+
   return (
     <div className="space-y-4 pb-4">
+      {restSeconds !== null && (
+        <RestTimerBar seconds={restSeconds} onAdjust={(d) => setRestSeconds((s) => Math.max(0, (s ?? 0) + d))} onDismiss={() => setRestSeconds(null)} />
+      )}
+
       <div className="flex gap-2">
         <input
           value={draft.name}
@@ -504,50 +654,73 @@ function SessionEditor({ draft, setDraft, exercises, setExercises, onCancel, onS
         />
       </div>
 
-      {draft.exercises.map((ex, exIdx) => (
-        <div key={exIdx} className="bg-white border border-neutral-200 rounded-xl p-3.5">
-          <div className="flex items-center justify-between mb-2.5">
-            <p className="font-medium text-neutral-900">{ex.exerciseName}</p>
-            <button onClick={() => removeExercise(exIdx)} className="p-1 text-neutral-400 active:text-red-600">
-              <X size={18} />
+      {draft.exercises.map((ex, exIdx) => {
+        const priorBest = getBestWeightForExercise(sessions, ex.exerciseId, editingOriginalId);
+        const lastWeight = ex.sets[ex.sets.length - 1]?.weight;
+        return (
+          <div key={exIdx} className="bg-white border border-neutral-200 rounded-xl p-3.5">
+            <div className="flex items-center justify-between mb-2.5">
+              <p className="font-medium text-neutral-900">{ex.exerciseName}</p>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setPlateCalcFor({ exerciseName: ex.exerciseName, weight: lastWeight || "" })}
+                  className="p-1 text-neutral-400 active:text-neutral-700"
+                  title="Plate calculator"
+                >
+                  <Calculator size={17} />
+                </button>
+                <button onClick={() => removeExercise(exIdx)} className="p-1 text-neutral-400 active:text-red-600">
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+            <div className="grid grid-cols-[1fr_1fr_1fr_auto] gap-2 mb-1.5 px-1">
+              <span className="text-[11px] text-neutral-400 uppercase">Set</span>
+              <span className="text-[11px] text-neutral-400 uppercase">Lbs</span>
+              <span className="text-[11px] text-neutral-400 uppercase">Reps</span>
+              <span></span>
+            </div>
+            {ex.sets.map((st, setIdx) => {
+              const isPR = priorBest > 0 && (Number(st.weight) || 0) > priorBest;
+              return (
+                <div key={setIdx} className="grid grid-cols-[1fr_1fr_1fr_auto] gap-2 mb-2 items-center">
+                  <span className="text-sm text-neutral-500 pl-1">{setIdx + 1}</span>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      value={st.weight}
+                      onChange={(e) => updateSet(exIdx, setIdx, "weight", e.target.value)}
+                      className={`w-full bg-neutral-100 rounded-lg px-2 py-2.5 text-center text-base outline-none focus:ring-1 focus:ring-emerald-600 ${isPR ? "ring-2 ring-amber-500" : ""}`}
+                    />
+                    {isPR && (
+                      <span className="absolute -top-2 -right-1.5 bg-amber-500 text-white rounded-full p-0.5" title={`PR! Previous best ${priorBest} lbs`}>
+                        <Trophy size={11} />
+                      </span>
+                    )}
+                  </div>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    value={st.reps}
+                    onChange={(e) => updateSet(exIdx, setIdx, "reps", e.target.value)}
+                    className="bg-neutral-100 rounded-lg px-2 py-2.5 text-center text-base outline-none focus:ring-1 focus:ring-emerald-600"
+                  />
+                  <button onClick={() => removeSet(exIdx, setIdx)} className="p-2 text-neutral-400 active:text-red-600">
+                    <X size={16} />
+                  </button>
+                </div>
+              );
+            })}
+            <button
+              onClick={() => addSet(exIdx)}
+              className="w-full mt-1 py-2 rounded-lg bg-neutral-100 text-emerald-600 text-sm font-medium flex items-center justify-center gap-1.5"
+            >
+              <Plus size={15} /> Add Set
             </button>
           </div>
-          <div className="grid grid-cols-[1fr_1fr_1fr_auto] gap-2 mb-1.5 px-1">
-            <span className="text-[11px] text-neutral-400 uppercase">Set</span>
-            <span className="text-[11px] text-neutral-400 uppercase">Lbs</span>
-            <span className="text-[11px] text-neutral-400 uppercase">Reps</span>
-            <span></span>
-          </div>
-          {ex.sets.map((st, setIdx) => (
-            <div key={setIdx} className="grid grid-cols-[1fr_1fr_1fr_auto] gap-2 mb-2 items-center">
-              <span className="text-sm text-neutral-500 pl-1">{setIdx + 1}</span>
-              <input
-                type="number"
-                inputMode="decimal"
-                value={st.weight}
-                onChange={(e) => updateSet(exIdx, setIdx, "weight", e.target.value)}
-                className="bg-neutral-100 rounded-lg px-2 py-2.5 text-center text-base outline-none focus:ring-1 focus:ring-emerald-600"
-              />
-              <input
-                type="number"
-                inputMode="numeric"
-                value={st.reps}
-                onChange={(e) => updateSet(exIdx, setIdx, "reps", e.target.value)}
-                className="bg-neutral-100 rounded-lg px-2 py-2.5 text-center text-base outline-none focus:ring-1 focus:ring-emerald-600"
-              />
-              <button onClick={() => removeSet(exIdx, setIdx)} className="p-2 text-neutral-400 active:text-red-600">
-                <X size={16} />
-              </button>
-            </div>
-          ))}
-          <button
-            onClick={() => addSet(exIdx)}
-            className="w-full mt-1 py-2 rounded-lg bg-neutral-100 text-emerald-600 text-sm font-medium flex items-center justify-center gap-1.5"
-          >
-            <Plus size={15} /> Add Set
-          </button>
-        </div>
-      ))}
+        );
+      })}
 
       {!pickerOpen ? (
         <button
@@ -565,6 +738,36 @@ function SessionEditor({ draft, setDraft, exercises, setExercises, onCancel, onS
         />
       )}
 
+      {draft.exercises.length > 0 && (
+        savingTemplate ? (
+          <div className="bg-white border border-neutral-200 rounded-xl p-3.5 space-y-2.5">
+            <p className="text-sm font-medium text-neutral-900">Save as Template</p>
+            <input
+              autoFocus
+              value={templateName}
+              onChange={(e) => setTemplateName(e.target.value)}
+              placeholder="e.g. Push Day"
+              className="w-full bg-neutral-100 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-1 focus:ring-emerald-600"
+            />
+            <div className="flex gap-2">
+              <button onClick={() => { setSavingTemplate(false); setTemplateName(""); }} className="flex-1 py-2.5 rounded-lg bg-neutral-100 text-neutral-700 text-sm font-medium">
+                Cancel
+              </button>
+              <button onClick={confirmSaveTemplate} disabled={!templateName.trim()} className="flex-1 py-2.5 rounded-lg bg-emerald-600 text-white text-sm font-semibold disabled:opacity-40">
+                Save
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={() => { setTemplateName(draft.name || ""); setSavingTemplate(true); }}
+            className="w-full py-2 text-sm text-neutral-500 font-medium flex items-center justify-center gap-1.5"
+          >
+            <Bookmark size={15} /> Save as Template
+          </button>
+        )
+      )}
+
       <div className="flex gap-2 pt-2">
         <button onClick={onCancel} className="flex-1 py-3 rounded-xl bg-neutral-100 text-neutral-700 font-medium">
           Cancel
@@ -575,6 +778,96 @@ function SessionEditor({ draft, setDraft, exercises, setExercises, onCancel, onS
         >
           <Check size={18} /> {isEditing ? "Save Changes" : "Finish Workout"}
         </button>
+      </div>
+
+      {plateCalcFor && <PlateCalculatorSheet initial={plateCalcFor} onClose={() => setPlateCalcFor(null)} />}
+    </div>
+  );
+}
+
+function RestTimerBar({ seconds, onAdjust, onDismiss }) {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  const done = seconds <= 0;
+  return (
+    <div className={`sticky top-0 z-10 rounded-xl px-3.5 py-2.5 flex items-center justify-between ${done ? "bg-emerald-600" : "bg-neutral-900"}`}>
+      <div className="flex items-center gap-2 text-white">
+        <Timer size={16} />
+        <span className="text-sm font-medium">{done ? "Rest done!" : "Resting"}</span>
+        <span className="text-lg font-bold tabular-nums">{mins}:{String(secs).padStart(2, "0")}</span>
+      </div>
+      <div className="flex items-center gap-1">
+        {!done && (
+          <>
+            <button onClick={() => onAdjust(-15)} className="text-white/80 text-xs font-medium px-2 py-1 active:text-white">-15s</button>
+            <button onClick={() => onAdjust(15)} className="text-white/80 text-xs font-medium px-2 py-1 active:text-white">+15s</button>
+          </>
+        )}
+        <button onClick={onDismiss} className="text-white/80 p-1 active:text-white"><X size={16} /></button>
+      </div>
+    </div>
+  );
+}
+
+function PlateCalculatorSheet({ initial, onClose }) {
+  const [barWeight, setBarWeight] = useState(45);
+  const [weight, setWeight] = useState(initial.weight || "");
+
+  const { plates, remainder } = calcPlates(weight, barWeight);
+
+  return (
+    <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/60" onClick={onClose}>
+      <div className="bg-white border-t border-neutral-200 rounded-t-2xl w-full max-w-md p-4 space-y-3.5" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between">
+          <p className="font-semibold">Plate Calculator</p>
+          <button onClick={onClose} className="p-1 text-neutral-400"><X size={20} /></button>
+        </div>
+        <p className="text-xs text-neutral-400">{initial.exerciseName}</p>
+
+        <div className="flex gap-2">
+          <div className="flex-1">
+            <p className="text-[11px] text-neutral-400 mb-1">Target weight (lbs)</p>
+            <input
+              type="number"
+              inputMode="decimal"
+              value={weight}
+              onChange={(e) => setWeight(e.target.value)}
+              className="w-full bg-neutral-100 rounded-lg px-3 py-2.5 text-center text-base outline-none focus:ring-1 focus:ring-emerald-600"
+            />
+          </div>
+          <div className="flex-1">
+            <p className="text-[11px] text-neutral-400 mb-1">Bar weight (lbs)</p>
+            <div className="flex gap-1">
+              {BAR_WEIGHTS.map((b) => (
+                <button
+                  key={b}
+                  onClick={() => setBarWeight(b)}
+                  className={`flex-1 py-2.5 rounded-lg text-sm font-medium border ${barWeight === b ? "bg-emerald-600 text-white border-emerald-600" : "bg-neutral-100 border-neutral-200 text-neutral-500"}`}
+                >
+                  {b}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-neutral-100 rounded-xl p-4 space-y-2">
+          <p className="text-[11px] text-neutral-400 uppercase">Per side</p>
+          {plates.length === 0 ? (
+            <p className="text-sm text-neutral-500">Just the bar — no plates needed.</p>
+          ) : (
+            <div className="flex flex-wrap gap-1.5">
+              {plates.map((p, i) => (
+                <span key={i} className="px-3 py-1.5 rounded-lg bg-white border border-neutral-200 text-sm font-semibold text-neutral-800">
+                  {p}
+                </span>
+              ))}
+            </div>
+          )}
+          {remainder > 0.05 && (
+            <p className="text-xs text-amber-600">+{remainder} lbs/side can't be made with standard plates.</p>
+          )}
+        </div>
       </div>
     </div>
   );
