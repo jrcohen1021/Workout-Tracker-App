@@ -873,70 +873,40 @@ function PlateCalculatorSheet({ initial, onClose }) {
   );
 }
 
-function getBaseName(ex) {
-  if (ex.baseName) return ex.baseName;
-  return ex.name.replace(/\s*\([^)]*\)\s*$/, "").trim();
-}
-function getEquipment(ex) {
-  if (ex.equipment !== undefined) return ex.equipment || "";
-  const m = ex.name.match(/\(([^)]*)\)\s*$/);
-  return m ? m[1] : "";
-}
-function displayName(baseName, equipment) {
-  return equipment ? `${baseName} (${equipment})` : baseName;
-}
-
 function ExercisePicker({ exercises, setExercises, onPick, onClose }) {
   const [query, setQuery] = useState("");
   const [showForm, setShowForm] = useState(false);
-  const [newBase, setNewBase] = useState("");
-  const [newEquipment, setNewEquipment] = useState("");
-  const [pendingMuscles, setPendingMuscles] = useState(null); // {baseName, equipment, muscles}
+  const [newName, setNewName] = useState("");
+  const [pendingMuscles, setPendingMuscles] = useState(null); // {name, muscles}
 
   const filtered = exercises.filter((e) => e.name.toLowerCase().includes(query.toLowerCase()));
 
   const openForm = () => {
-    setNewBase(query.trim());
-    setNewEquipment("");
+    setNewName(query.trim());
     setShowForm(true);
   };
 
-  const matchingBase = newBase.trim()
-    ? exercises.find((e) => getBaseName(e).toLowerCase() === newBase.trim().toLowerCase())
+  const exactMatch = newName.trim()
+    ? exercises.find((e) => e.name.toLowerCase() === newName.trim().toLowerCase())
     : null;
-  const proposedName = displayName(newBase.trim(), newEquipment.trim());
-  const exactVariantExists = exercises.some((e) => e.name.toLowerCase() === proposedName.toLowerCase());
 
   const handleAddNew = () => {
-    const baseName = newBase.trim();
-    const equipment = newEquipment.trim();
-    if (!baseName) return;
+    const name = newName.trim();
+    if (!name) return;
 
-    if (exactVariantExists) {
-      const existing = exercises.find((e) => e.name.toLowerCase() === proposedName.toLowerCase());
-      onPick(existing);
+    if (exactMatch) {
+      onPick(exactMatch);
       setShowForm(false);
       setQuery("");
       return;
     }
 
-    if (matchingBase) {
-      // Reuse muscle tags from the existing base movement.
-      const newEx = { id: uid(), baseName, equipment, name: proposedName, muscles: matchingBase.muscles || [] };
-      const next = [...exercises, newEx];
-      setExercises(next);
-      onPick(newEx);
-      setShowForm(false);
-      setQuery("");
-      return;
-    }
-
-    setPendingMuscles({ baseName, equipment, muscles: [] });
+    setPendingMuscles({ name, muscles: [] });
   };
 
   const confirmNewExercise = () => {
-    const { baseName, equipment, muscles } = pendingMuscles;
-    const newEx = { id: uid(), baseName, equipment, name: displayName(baseName, equipment), muscles };
+    const { name, muscles } = pendingMuscles;
+    const newEx = { id: uid(), name, muscles };
     const next = [...exercises, newEx];
     setExercises(next);
     onPick(newEx);
@@ -958,8 +928,7 @@ function ExercisePicker({ exercises, setExercises, onPick, onClose }) {
   if (pendingMuscles) {
     return (
       <div className="bg-white border border-neutral-200 rounded-xl p-3.5 space-y-3">
-        <p className="font-medium text-neutral-900">"{displayName(pendingMuscles.baseName, pendingMuscles.equipment)}" targets:</p>
-        <p className="text-xs text-neutral-400">Muscle tags are saved against "{pendingMuscles.baseName}" — every brand/equipment variant of this movement will share them.</p>
+        <p className="font-medium text-neutral-900">"{pendingMuscles.name}" targets:</p>
         <div className="space-y-2">
           {Object.entries(MUSCLE_TAXONOMY).map(([group, regions]) => (
             <div key={group}>
@@ -1006,32 +975,19 @@ function ExercisePicker({ exercises, setExercises, onPick, onClose }) {
           <button onClick={() => setShowForm(false)} className="p-1 text-neutral-400"><X size={18} /></button>
         </div>
         <div>
-          <p className="text-[11px] text-neutral-400 mb-1">Movement name</p>
+          <p className="text-[11px] text-neutral-400 mb-1">Exercise name</p>
           <input
             autoFocus
-            value={newBase}
-            onChange={(e) => setNewBase(e.target.value)}
-            placeholder="e.g. Chest Press"
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            placeholder="e.g. Incline Bench Press"
             className="w-full bg-neutral-100 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-1 focus:ring-emerald-600"
           />
         </div>
-        <div>
-          <p className="text-[11px] text-neutral-400 mb-1">Equipment / brand (optional)</p>
-          <input
-            value={newEquipment}
-            onChange={(e) => setNewEquipment(e.target.value)}
-            placeholder="e.g. Hammer Strength"
-            className="w-full bg-neutral-100 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-1 focus:ring-emerald-600"
-          />
-        </div>
-        {newBase.trim() && <p className="text-xs text-neutral-400">Will be added as "{proposedName}"</p>}
-        {matchingBase && !exactVariantExists && (
-          <p className="text-xs text-sky-600">Reusing muscle tags from "{matchingBase.baseName || getBaseName(matchingBase)}".</p>
-        )}
-        {exactVariantExists && <p className="text-xs text-neutral-400">This exact variant already exists — tapping Add will just use it.</p>}
+        {exactMatch && <p className="text-xs text-neutral-400">This exercise already exists — tapping Add will just use it.</p>}
         <button
           onClick={handleAddNew}
-          disabled={!newBase.trim()}
+          disabled={!newName.trim()}
           className="w-full py-2.5 rounded-lg bg-emerald-600 text-white text-sm font-semibold flex items-center justify-center gap-1.5 disabled:opacity-40"
         >
           <Plus size={15} /> Add Exercise
@@ -1084,36 +1040,25 @@ function ExercisePicker({ exercises, setExercises, onPick, onClose }) {
 function ProgressTab({ exercises, sessions }) {
   const loggedExerciseIds = new Set();
   sessions.forEach((s) => s.exercises.forEach((e) => loggedExerciseIds.add(e.exerciseId)));
-  const loggedExercises = exercises.filter((e) => loggedExerciseIds.has(e.id));
+  const loggedExercises = exercises.filter((e) => loggedExerciseIds.has(e.id)).sort((a, b) => a.name.localeCompare(b.name));
 
-  const movementNames = [...new Set(loggedExercises.map((e) => getBaseName(e)))].sort();
-
-  const [selectedBase, setSelectedBase] = useState(movementNames[0] || "");
-  const [selectedVariant, setSelectedVariant] = useState("all"); // 'all' or exercise id
+  const [selectedId, setSelectedId] = useState(loggedExercises[0]?.id || "");
   const [metric, setMetric] = useState("weight"); // weight | volume
 
   useEffect(() => {
-    if (!selectedBase && movementNames.length > 0) setSelectedBase(movementNames[0]);
-  }, [movementNames.length]);
-
-  useEffect(() => {
-    setSelectedVariant("all");
-  }, [selectedBase]);
+    if (!selectedId && loggedExercises.length > 0) setSelectedId(loggedExercises[0].id);
+  }, [loggedExercises.length]);
 
   if (loggedExercises.length === 0) {
     return <p className="text-neutral-400 text-sm text-center pt-10">Log a workout to start seeing progress.</p>;
   }
-
-  const variants = loggedExercises.filter((e) => getBaseName(e) === selectedBase);
-  const includedIds =
-    selectedVariant === "all" ? variants.map((v) => v.id) : [selectedVariant];
 
   const points = [];
   sessions
     .slice()
     .sort((a, b) => (a.date > b.date ? 1 : -1))
     .forEach((s) => {
-      const matches = s.exercises.filter((e) => includedIds.includes(e.exerciseId));
+      const matches = s.exercises.filter((e) => e.exerciseId === selectedId);
       if (matches.length === 0) return;
       let topWeight = 0;
       let volume = 0;
@@ -1132,48 +1077,21 @@ function ProgressTab({ exercises, sessions }) {
   const first = points[0];
   const last = points[points.length - 1];
   const trend = points.length > 1 ? last.topWeight - first.topWeight : 0;
+  const dataKey = metric === "weight" ? "topWeight" : "volume";
+  const chartMax = points.reduce((m, p) => Math.max(m, p[dataKey]), 0);
+  const yDomain = [0, Math.ceil((chartMax || 1) * 1.2)];
 
   return (
     <div className="space-y-4">
       <select
-        value={selectedBase}
-        onChange={(e) => setSelectedBase(e.target.value)}
+        value={selectedId}
+        onChange={(e) => setSelectedId(e.target.value)}
         className="w-full bg-white border border-neutral-200 rounded-xl px-3 py-2.5 text-sm outline-none"
       >
-        {movementNames.map((n) => (
-          <option key={n} value={n}>{n}</option>
+        {loggedExercises.map((e) => (
+          <option key={e.id} value={e.id}>{e.name}</option>
         ))}
       </select>
-
-      {variants.length > 1 && (
-        <div className="flex gap-1.5 overflow-x-auto pb-0.5">
-          <button
-            onClick={() => setSelectedVariant("all")}
-            className="shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border"
-            style={
-              selectedVariant === "all"
-                ? { backgroundColor: "#0284c733", borderColor: "#0284c7", color: "#0284c7" }
-                : { borderColor: "#d1d5db", color: "#6b7280" }
-            }
-          >
-            All equipment (combined)
-          </button>
-          {variants.map((v) => (
-            <button
-              key={v.id}
-              onClick={() => setSelectedVariant(v.id)}
-              className="shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border"
-              style={
-                selectedVariant === v.id
-                  ? { backgroundColor: "#0284c733", borderColor: "#0284c7", color: "#0284c7" }
-                  : { borderColor: "#d1d5db", color: "#6b7280" }
-              }
-            >
-              {getEquipment(v) || v.name}
-            </button>
-          ))}
-        </div>
-      )}
 
       <div className="flex gap-2">
         {[{ id: "weight", label: "Top Set Weight" }, { id: "volume", label: "Volume" }].map((m) => (
@@ -1193,14 +1111,14 @@ function ProgressTab({ exercises, sessions }) {
         <StatCard label="Trend" value={`${trend >= 0 ? "+" : ""}${trend}`} sub="lbs" color={trend > 0 ? "#059669" : trend < 0 ? "#dc2626" : "#6b7280"} />
       </div>
 
-      <div className="bg-white border border-neutral-200 rounded-xl p-3 h-64">
+      <div className="bg-white border border-neutral-200 rounded-xl p-3 pt-5 h-64">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={points} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+          <LineChart data={points} margin={{ top: 8, right: 12, left: -20, bottom: 0 }}>
             <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
             <XAxis dataKey="label" tick={{ fill: "#9ca3af", fontSize: 10 }} />
-            <YAxis tick={{ fill: "#9ca3af", fontSize: 10 }} />
+            <YAxis domain={yDomain} tick={{ fill: "#9ca3af", fontSize: 10 }} />
             <Tooltip contentStyle={{ background: "#ffffff", border: "1px solid #d1d5db", borderRadius: 8, fontSize: 12 }} />
-            <Line type="monotone" dataKey={metric === "weight" ? "topWeight" : "volume"} stroke="#0284c7" strokeWidth={2.5} dot={{ r: 3, fill: "#0284c7" }} />
+            <Line type="monotone" dataKey={dataKey} stroke="#0284c7" strokeWidth={2.5} dot={{ r: 3, fill: "#0284c7" }} />
           </LineChart>
         </ResponsiveContainer>
       </div>
@@ -1458,6 +1376,12 @@ function CardioTab({ cardioLog, setCardioLog }) {
       elevation: Number(a.elevationGain) || 0,
     }));
 
+  const chartValues = chartData.map((d) => d[metric]);
+  const dataMin = chartValues.length ? Math.min(...chartValues) : 0;
+  const dataMax = chartValues.length ? Math.max(...chartValues) : 1;
+  const cardioPad = (dataMax - dataMin) * 0.15 || dataMax * 0.15 || 1;
+  const cardioYDomain = [Math.max(0, Math.floor(dataMin - cardioPad)), Math.ceil(dataMax + cardioPad)];
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-2">
@@ -1498,12 +1422,13 @@ function CardioTab({ cardioLog, setCardioLog }) {
               </button>
             ))}
           </div>
-          <div className="bg-white border border-neutral-200 rounded-xl p-3 h-56">
+          <div className="bg-white border border-neutral-200 rounded-xl p-3 pt-5 h-56">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <LineChart data={chartData} margin={{ top: 8, right: 12, left: -20, bottom: 0 }}>
                 <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
                 <XAxis dataKey="label" tick={{ fill: "#9ca3af", fontSize: 10 }} />
                 <YAxis
+                  domain={cardioYDomain}
                   tick={{ fill: "#9ca3af", fontSize: 10 }}
                   reversed={metric === "pace"}
                   tickFormatter={metric === "pace" ? (v) => formatDuration(v) : undefined}

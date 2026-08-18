@@ -11,14 +11,16 @@ private copy of all six keys, synced across devices.
 ```json
 {
   "id": "string (unique)",
-  "baseName": "string, e.g. 'Incline Bench Press'",
-  "equipment": "string, e.g. 'Smith Machine' (optional, can be empty)",
-  "name": "string, computed display name: '{baseName} ({equipment})' or just baseName",
+  "name": "string, e.g. 'Incline Bench Press'",
   "muscles": [
     { "group": "Chest|Back|Shoulders|Arms|Legs|Core", "region": "string, e.g. 'Upper Chest'" }
   ]
 }
 ```
+
+No equipment/brand variant tracking — each exercise is just a name. Older
+imported data may still carry legacy `baseName`/`equipment` fields; they're
+ignored.
 
 Muscle taxonomy (fixed set used throughout the app — see `MUSCLE_TAXONOMY` near
 the top of `src/App.jsx`):
