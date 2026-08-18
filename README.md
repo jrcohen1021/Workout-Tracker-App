@@ -9,9 +9,10 @@ running/hiking tracker. Built on Vite + React, persisted with Supabase
 - **Frontend:** Vite + React + Tailwind CSS, `recharts` for charts, `lucide-react` for icons.
 - **Persistence:** Supabase Postgres. A single `app_state` table holds one JSON
   row per `(user, key)` for each of `exercises`, `sessions`, `food-log`,
-  `daily-targets`, `cardio-log`, `workout-templates`, and `draft-session` (see
-  `DATA_MODEL.md`). Row Level Security scopes every row to the signed-in user,
-  so data syncs across devices for the same account.
+  `daily-targets`, `cardio-log`, `workout-templates`, `body-weight-log`,
+  `exercise-goals`, and `draft-session` (see `DATA_MODEL.md`). Row Level
+  Security scopes every row to the signed-in user, so data syncs across
+  devices for the same account.
 - **Auth:** Supabase email/password auth, gating the app behind a sign-in
   screen (`src/components/AuthGate.jsx`).
 - **PWA:** `public/manifest.webmanifest` + icons give a real home-screen icon
@@ -22,11 +23,24 @@ running/hiking tracker. Built on Vite + React, persisted with Supabase
 - **Rest timer** — starts automatically after logging a set (90s default,
   ±15s adjustable).
 - **Personal records** — a set's weight input flags with a trophy badge when
-  it beats your previous best for that exact exercise variant.
+  it beats your previous best for that exercise.
 - **Templates** — save a workout's exercise list (not weights/reps) and start
-  future workouts from it.
+  future workouts from it, pre-filled with your last logged sets.
+- **Repeat last workout** — one tap to start a new session cloned from your
+  most recently logged one.
 - **Plate calculator** — per exercise, shows which plates to load per side
   for a target barbell weight.
+- **Previous-log pre-fill** — adding an exercise (directly or via a template)
+  pre-fills its sets with what you logged last time.
+- **Streak + heatmap** — current workout streak and a 10-week activity
+  heatmap on the Workouts tab.
+- **Per-exercise notes** — optional free-text note per exercise, per session.
+- **Progress tab** — three views: per-exercise charts (with an estimated
+  1-rep-max and an optional weight goal with progress bar), a weekly
+  sets-per-muscle-group breakdown, and body weight tracking with its own
+  trend chart.
+- **Cardio PRs** — fastest pace, longest distance, and most elevation gain
+  flag with a trophy badge per activity type.
 
 ## Setup
 

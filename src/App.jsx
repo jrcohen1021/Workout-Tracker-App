@@ -3,7 +3,7 @@ import {
   Dumbbell, TrendingUp, UtensilsCrossed, Plus, X,
   ChevronLeft, ChevronRight, Trash2, Settings, Check, Loader2, ChevronDown,
   ChevronUp, Pencil, Mountain, Footprints, Timer, Trophy, Calculator,
-  Bookmark, LayoutTemplate
+  Bookmark, LayoutTemplate, Repeat, Flame, Target
 } from "lucide-react";
 import {
   ComposedChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
@@ -77,6 +77,79 @@ function getPreviousLog(sessions, exerciseId, excludeSessionId) {
   return latest;
 }
 
+function estimate1RM(weight, reps) {
+  const w = Number(weight) || 0;
+  const r = Number(reps) || 0;
+  if (w <= 0 || r <= 0) return 0;
+  return w * (1 + r / 30);
+}
+
+// ---------- Workout streak / heatmap ----------
+
+function computeStreak(sessions) {
+  const days = new Set(sessions.map((s) => s.date));
+  if (days.size === 0) return 0;
+  const cursor = new Date(todayStr() + "T00:00:00");
+  if (!days.has(todayStr())) cursor.setDate(cursor.getDate() - 1);
+  let streak = 0;
+  while (days.has(cursor.toISOString().slice(0, 10))) {
+    streak++;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  return streak;
+}
+
+function buildHeatmapDays(sessions, weeks) {
+  const counts = {};
+  sessions.forEach((s) => { counts[s.date] = (counts[s.date] || 0) + 1; });
+  const today = new Date(todayStr() + "T00:00:00");
+  const totalDays = weeks * 7;
+  const cells = [];
+  for (let i = totalDays - 1; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const dateStr = d.toISOString().slice(0, 10);
+    cells.push({ date: dateStr, count: counts[dateStr] || 0 });
+  }
+  return cells;
+}
+
+// ---------- Muscle group volume ----------
+
+function computeMuscleVolume(sessions, exercises, days) {
+  const exerciseById = new Map(exercises.map((e) => [e.id, e]));
+  const cutoff = Date.now() - days * 86400000;
+  const totals = {};
+  sessions.forEach((s) => {
+    if (new Date(s.date + "T00:00:00").getTime() < cutoff) return;
+    s.exercises.forEach((ex) => {
+      const def = exerciseById.get(ex.exerciseId);
+      if (!def || !def.muscles || def.muscles.length === 0) return;
+      const groups = new Set(def.muscles.map((m) => m.group));
+      groups.forEach((g) => { totals[g] = (totals[g] || 0) + ex.sets.length; });
+    });
+  });
+  return totals;
+}
+
+// ---------- Cardio PRs ----------
+
+function getCardioBests(cardioLog, type, excludeId) {
+  let bestPace = null;
+  let bestDistance = 0;
+  let bestElevation = 0;
+  cardioLog.forEach((a) => {
+    if (a.id === excludeId || a.type !== type) return;
+    const p = paceSecPerMile(a.duration, a.distance);
+    if (p !== null && (bestPace === null || p < bestPace)) bestPace = p;
+    const dist = Number(a.distance) || 0;
+    if (dist > bestDistance) bestDistance = dist;
+    const elev = Number(a.elevationGain) || 0;
+    if (elev > bestElevation) bestElevation = elev;
+  });
+  return { bestPace, bestDistance, bestElevation };
+}
+
 // ---------- Plate calculator ----------
 
 const PLATE_WEIGHTS = [45, 35, 25, 10, 5, 2.5];
@@ -121,6 +194,8 @@ export default function WorkoutFoodApp() {
   const [targets, setTargets] = useState({ calories: 2400, protein: 180, carbs: 250, fat: 70 });
   const [cardioLog, setCardioLog] = useState([]);
   const [templates, setTemplates] = useState([]);
+  const [bodyWeightLog, setBodyWeightLog] = useState([]);
+  const [exerciseGoals, setExerciseGoals] = useState({});
 
   const [loadFailed, setLoadFailed] = useState(false);
   const [loadAttempt, setLoadAttempt] = useState(0);
@@ -129,13 +204,15 @@ export default function WorkoutFoodApp() {
     let cancelled = false;
     setReady(false);
     (async () => {
-      const [ex, se, fl, tg, cl, tp] = await Promise.all([
+      const [ex, se, fl, tg, cl, tp, bw, gl] = await Promise.all([
         loadKey("exercises", []),
         loadKey("sessions", []),
         loadKey("food-log", []),
         loadKey("daily-targets", { calories: 2400, protein: 180, carbs: 250, fat: 70 }),
         loadKey("cardio-log", []),
         loadKey("workout-templates", []),
+        loadKey("body-weight-log", []),
+        loadKey("exercise-goals", {}),
       ]);
       if (cancelled) return;
       setExercises(ex.value);
@@ -144,7 +221,9 @@ export default function WorkoutFoodApp() {
       setTargets(tg.value);
       setCardioLog(cl.value);
       setTemplates(tp.value);
-      setLoadFailed([ex, se, fl, tg, cl, tp].some((r) => r.failed));
+      setBodyWeightLog(bw.value);
+      setExerciseGoals(gl.value);
+      setLoadFailed([ex, se, fl, tg, cl, tp, bw, gl].some((r) => r.failed));
       setReady(true);
     })();
     return () => { cancelled = true; };
@@ -173,6 +252,8 @@ export default function WorkoutFoodApp() {
     targets: (v) => persistAndSave(setTargets, "daily-targets", v),
     cardioLog: (v) => persistAndSave(setCardioLog, "cardio-log", v),
     templates: (v) => persistAndSave(setTemplates, "workout-templates", v),
+    bodyWeightLog: (v) => persistAndSave(setBodyWeightLog, "body-weight-log", v),
+    exerciseGoals: (v) => persistAndSave(setExerciseGoals, "exercise-goals", v),
   };
 
   const activeTabDef = TABS.find((t) => t.id === activeTab) || TABS[0];
@@ -215,7 +296,7 @@ export default function WorkoutFoodApp() {
               Reload
             </button>
             <button
-              onClick={() => exportBackup({ exercises, sessions, foodLog, targets, cardioLog })}
+              onClick={() => exportBackup({ exercises, sessions, foodLog, targets, cardioLog, templates, bodyWeightLog, exerciseGoals })}
               className="text-[11px] text-neutral-500 border border-white/10 rounded-full px-2.5 py-1 active:text-neutral-300"
             >
               Backup
@@ -246,7 +327,16 @@ export default function WorkoutFoodApp() {
             setTemplates={persist.templates}
           />
         )}
-        {activeTab === "progress" && <ProgressTab exercises={exercises} sessions={sessions} />}
+        {activeTab === "progress" && (
+          <ProgressTab
+            exercises={exercises}
+            sessions={sessions}
+            bodyWeightLog={bodyWeightLog}
+            setBodyWeightLog={persist.bodyWeightLog}
+            exerciseGoals={exerciseGoals}
+            setExerciseGoals={persist.exerciseGoals}
+          />
+        )}
         {activeTab === "cardio" && <CardioTab cardioLog={cardioLog} setCardioLog={persist.cardioLog} />}
         {activeTab === "food" && (
           <FoodTab foodLog={foodLog} setFoodLog={persist.foodLog} targets={targets} setTargets={persist.targets} />
@@ -324,6 +414,28 @@ function WorkoutsTab({ exercises, setExercises, sessions, setSessions, templates
   const startNew = () => { setDraft(emptyDraft()); setEditingOriginalId(null); setDraftRestored(false); };
   const startEdit = (session) => { setDraft(JSON.parse(JSON.stringify(session))); setEditingOriginalId(session.id); setExpandedId(null); setDraftRestored(false); };
   const cancelDraft = () => { setDraft(null); setEditingOriginalId(null); setDraftRestored(false); };
+
+  const repeatLastWorkout = () => {
+    const last = sessions.reduce((latest, s) => {
+      if (!latest) return s;
+      if (s.date !== latest.date) return s.date > latest.date ? s : latest;
+      return (s.createdAt || 0) > (latest.createdAt || 0) ? s : latest;
+    }, null);
+    if (!last) return;
+    setDraft({
+      id: uid(),
+      date: todayStr(),
+      createdAt: Date.now(),
+      name: last.name,
+      exercises: last.exercises.map((e) => ({
+        exerciseId: e.exerciseId,
+        exerciseName: e.exerciseName,
+        sets: e.sets.map((st) => ({ weight: String(st.weight ?? ""), reps: String(st.reps ?? "") })),
+      })),
+    });
+    setEditingOriginalId(null);
+    setDraftRestored(false);
+  };
 
   const startFromTemplate = (template) => {
     setDraft({
@@ -442,8 +554,42 @@ function WorkoutsTab({ exercises, setExercises, sessions, setSessions, templates
     );
   }
 
+  const streak = computeStreak(sessions);
+  const heatmapCells = buildHeatmapDays(sessions, 10);
+
   return (
     <div className="space-y-4">
+      {sessions.length > 0 && (
+        <div className="bg-neutral-900 border border-white/10 rounded-xl p-3.5">
+          <div className="flex items-center justify-between mb-2.5">
+            <div className="flex items-center gap-1.5">
+              <Flame size={16} className={streak > 0 ? "text-amber-400" : "text-neutral-600"} />
+              <p className="text-sm font-medium text-neutral-100">
+                {streak > 0 ? `${streak} day streak` : "No active streak"}
+              </p>
+            </div>
+            <p className="text-[11px] text-neutral-500">Last 10 weeks</p>
+          </div>
+          <div
+            className="grid gap-[3px]"
+            style={{ gridTemplateRows: "repeat(7, 1fr)", gridAutoFlow: "column", gridAutoColumns: "10px" }}
+          >
+            {heatmapCells.map((c) => (
+              <div
+                key={c.date}
+                title={`${c.date}: ${c.count} workout${c.count === 1 ? "" : "s"}`}
+                className="rounded-[2px]"
+                style={{
+                  width: 10,
+                  height: 10,
+                  backgroundColor: c.count === 0 ? "#27272a" : c.count === 1 ? "#34d39980" : "#34d399",
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="flex gap-2">
         <button
           onClick={startNew}
@@ -459,6 +605,15 @@ function WorkoutsTab({ exercises, setExercises, sessions, setSessions, templates
         </button>
         <input ref={importInputRef} type="file" accept="application/json" className="hidden" onChange={onImportFileChange} />
       </div>
+
+      {sessions.length > 0 && (
+        <button
+          onClick={repeatLastWorkout}
+          className="w-full py-2.5 rounded-xl border border-dashed border-white/15 text-neutral-500 text-sm font-medium flex items-center justify-center gap-1.5 active:bg-neutral-900"
+        >
+          <Repeat size={16} /> Repeat Last Workout
+        </button>
+      )}
 
       {templates.length > 0 && (
         <button
@@ -553,6 +708,7 @@ function WorkoutsTab({ exercises, setExercises, sessions, setSessions, templates
                           <p className="text-xs text-neutral-500">
                             {ex.sets.map((st, j) => `${st.weight}×${st.reps}`).join(", ")}
                           </p>
+                          {ex.notes && <p className="text-xs text-neutral-400 italic mt-0.5">{ex.notes}</p>}
                         </div>
                       ))}
                       <div className="flex gap-2 pt-1">
@@ -676,6 +832,12 @@ function SessionEditor({ draft, setDraft, exercises, setExercises, sessions, edi
     setDraft({ ...draft, exercises: next });
   };
 
+  const updateExerciseNotes = (exIdx, notes) => {
+    const next = [...draft.exercises];
+    next[exIdx] = { ...next[exIdx], notes };
+    setDraft({ ...draft, exercises: next });
+  };
+
   const confirmSaveTemplate = () => {
     if (!templateName.trim()) return;
     onSaveTemplate(templateName.trim(), draft.exercises);
@@ -730,6 +892,12 @@ function SessionEditor({ draft, setDraft, exercises, setExercises, sessions, edi
                 Last time ({fmtDate(previousLog.date)}): {previousLog.sets.map((st, i) => `${st.weight}×${st.reps}`).join(", ")}
               </p>
             )}
+            <input
+              value={ex.notes || ""}
+              onChange={(e) => updateExerciseNotes(exIdx, e.target.value)}
+              placeholder="Add a note (optional)"
+              className="w-full bg-transparent text-xs text-neutral-400 placeholder-neutral-600 outline-none mb-2.5 border-b border-white/5 focus:border-white/20 pb-1.5"
+            />
             <div className="grid grid-cols-[1fr_1fr_1fr_auto] gap-2 mb-1.5 px-1">
               <span className="text-[11px] text-neutral-500 uppercase">Set</span>
               <span className="text-[11px] text-neutral-500 uppercase">Lbs</span>
@@ -1099,13 +1267,47 @@ function ExercisePicker({ exercises, setExercises, onPick, onClose }) {
 // ---------- Progress Tab ----------
 
 
-function ProgressTab({ exercises, sessions }) {
+const PROGRESS_VIEWS = [
+  { id: "exercises", label: "Exercises" },
+  { id: "muscles", label: "Muscles" },
+  { id: "bodyweight", label: "Body Weight" },
+];
+
+function ProgressTab({ exercises, sessions, bodyWeightLog, setBodyWeightLog, exerciseGoals, setExerciseGoals }) {
+  const [view, setView] = useState("exercises");
+
+  return (
+    <div className="space-y-4">
+      <div className="flex gap-2">
+        {PROGRESS_VIEWS.map((v) => (
+          <button
+            key={v.id}
+            onClick={() => setView(v.id)}
+            className={`flex-1 py-2 rounded-lg text-xs font-medium border ${view === v.id ? "bg-sky-400 text-white border-sky-400" : "bg-neutral-900 border-white/10 text-neutral-400"}`}
+          >
+            {v.label}
+          </button>
+        ))}
+      </div>
+
+      {view === "exercises" && (
+        <ExerciseProgress exercises={exercises} sessions={sessions} exerciseGoals={exerciseGoals} setExerciseGoals={setExerciseGoals} />
+      )}
+      {view === "muscles" && <MuscleVolumeView exercises={exercises} sessions={sessions} />}
+      {view === "bodyweight" && <BodyWeightProgress log={bodyWeightLog} setLog={setBodyWeightLog} />}
+    </div>
+  );
+}
+
+function ExerciseProgress({ exercises, sessions, exerciseGoals, setExerciseGoals }) {
   const loggedExerciseIds = new Set();
   sessions.forEach((s) => s.exercises.forEach((e) => loggedExerciseIds.add(e.exerciseId)));
   const loggedExercises = exercises.filter((e) => loggedExerciseIds.has(e.id)).sort((a, b) => a.name.localeCompare(b.name));
 
   const [selectedId, setSelectedId] = useState(loggedExercises[0]?.id || "");
   const [metric, setMetric] = useState("weight"); // weight | volume
+  const [editingGoal, setEditingGoal] = useState(false);
+  const [goalInput, setGoalInput] = useState("");
 
   useEffect(() => {
     if (!selectedId && loggedExercises.length > 0) setSelectedId(loggedExercises[0].id);
@@ -1116,6 +1318,7 @@ function ProgressTab({ exercises, sessions }) {
   }
 
   const points = [];
+  let est1RM = 0;
   sessions
     .slice()
     .sort((a, b) => (a.date !== b.date ? (a.date > b.date ? 1 : -1) : (a.createdAt || 0) - (b.createdAt || 0)))
@@ -1130,6 +1333,7 @@ function ProgressTab({ exercises, sessions }) {
           const r = Number(st.reps) || 0;
           topWeight = Math.max(topWeight, w);
           volume += w * r;
+          est1RM = Math.max(est1RM, estimate1RM(w, r));
         })
       );
       points.push({ date: s.date, label: fmtDate(s.date).split(",")[0] + " " + s.date.slice(5), topWeight, volume });
@@ -1143,11 +1347,27 @@ function ProgressTab({ exercises, sessions }) {
   const chartMax = points.reduce((m, p) => Math.max(m, p[dataKey]), 0);
   const yDomain = [0, Math.ceil((chartMax || 1) * 1.2)];
 
+  const goal = exerciseGoals[selectedId];
+  const goalPct = goal > 0 ? Math.min(100, (best / goal) * 100) : 0;
+
+  const openGoalEditor = () => {
+    setGoalInput(goal ? String(goal) : "");
+    setEditingGoal(true);
+  };
+  const saveGoal = () => {
+    const v = Number(goalInput);
+    const next = { ...exerciseGoals };
+    if (!goalInput.trim() || !(v > 0)) delete next[selectedId];
+    else next[selectedId] = v;
+    setExerciseGoals(next);
+    setEditingGoal(false);
+  };
+
   return (
     <div className="space-y-4">
       <select
         value={selectedId}
-        onChange={(e) => setSelectedId(e.target.value)}
+        onChange={(e) => { setSelectedId(e.target.value); setEditingGoal(false); }}
         className="w-full bg-neutral-900 border border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none"
       >
         {loggedExercises.map((e) => (
@@ -1167,10 +1387,51 @@ function ProgressTab({ exercises, sessions }) {
         ))}
       </div>
 
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-2 gap-2">
         <StatCard label="Best" value={`${best}`} sub="lbs" />
         <StatCard label="Latest" value={`${last?.topWeight ?? "-"}`} sub="lbs" />
         <StatCard label="Trend" value={`${trend >= 0 ? "+" : ""}${trend}`} sub="lbs" color={trend > 0 ? "#34d399" : trend < 0 ? "#f87171" : "#a1a1aa"} />
+        <StatCard label="Est. 1RM" value={`${Math.round(est1RM)}`} sub="lbs" color="#a78bfa" />
+      </div>
+
+      <div className="bg-neutral-900 border border-white/10 rounded-xl p-3.5">
+        <div className="flex items-center justify-between mb-1">
+          <div className="flex items-center gap-1.5 text-neutral-300">
+            <Target size={14} />
+            <p className="text-sm font-medium">Goal</p>
+          </div>
+          {!editingGoal && (
+            <button onClick={openGoalEditor} className="text-xs text-sky-400 font-medium">
+              {goal ? "Edit" : "Set Goal"}
+            </button>
+          )}
+        </div>
+        {editingGoal ? (
+          <div className="flex gap-2 mt-2">
+            <input
+              type="number"
+              inputMode="decimal"
+              autoFocus
+              value={goalInput}
+              onChange={(e) => setGoalInput(e.target.value)}
+              placeholder="Target weight (lbs)"
+              className="flex-1 bg-white/5 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-sky-400"
+            />
+            <button onClick={saveGoal} className="px-3 rounded-lg bg-sky-400 text-white text-sm font-semibold">Save</button>
+          </div>
+        ) : goal ? (
+          <>
+            <div className="flex justify-between text-xs mb-1 mt-1">
+              <span className="text-neutral-400">{best} / {goal} lbs</span>
+              <span className="text-neutral-300 font-medium">{Math.round(goalPct)}%</span>
+            </div>
+            <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+              <div className="h-full rounded-full transition-all bg-sky-400" style={{ width: goalPct + "%" }} />
+            </div>
+          </>
+        ) : (
+          <p className="text-xs text-neutral-500 mt-1">No goal set for this exercise yet.</p>
+        )}
       </div>
 
       <div className="bg-neutral-900 border border-white/10 rounded-xl p-3 pt-5 h-64">
@@ -1191,6 +1452,144 @@ function ProgressTab({ exercises, sessions }) {
           </ComposedChart>
         </ResponsiveContainer>
       </div>
+    </div>
+  );
+}
+
+function MuscleVolumeView({ exercises, sessions }) {
+  const totals = computeMuscleVolume(sessions, exercises, 7);
+  const max = Math.max(1, ...Object.values(totals));
+  const groups = Object.keys(MUSCLE_TAXONOMY);
+  const hasAny = Object.keys(totals).length > 0;
+
+  return (
+    <div className="bg-neutral-900 border border-white/10 rounded-xl p-4 space-y-3">
+      <p className="text-sm font-semibold text-neutral-300">Sets per Muscle Group — Last 7 Days</p>
+      {!hasAny ? (
+        <p className="text-neutral-500 text-sm text-center py-6">
+          No sets logged this week yet, or your exercises don't have muscle groups tagged.
+        </p>
+      ) : (
+        <div className="space-y-2.5">
+          {groups.map((g) => {
+            const count = totals[g] || 0;
+            const pct = (count / max) * 100;
+            return (
+              <div key={g}>
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="text-neutral-400">{g}</span>
+                  <span className="text-neutral-300 font-medium">{count} set{count === 1 ? "" : "s"}</span>
+                </div>
+                <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                  <div className="h-full rounded-full transition-all" style={{ width: pct + "%", backgroundColor: GROUP_COLORS[g] }} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function BodyWeightProgress({ log, setLog }) {
+  const [weightInput, setWeightInput] = useState("");
+  const [dateInput, setDateInput] = useState(todayStr());
+
+  const sorted = log.slice().sort((a, b) => (a.date !== b.date ? (a.date > b.date ? 1 : -1) : (a.createdAt || 0) - (b.createdAt || 0)));
+
+  const addEntry = () => {
+    const w = Number(weightInput);
+    if (!(w > 0)) return;
+    const existingIdx = sorted.findIndex((e) => e.date === dateInput);
+    let next;
+    if (existingIdx >= 0) {
+      const existingId = sorted[existingIdx].id;
+      next = log.map((e) => (e.id === existingId ? { ...e, weight: w } : e));
+    } else {
+      next = [...log, { id: uid(), date: dateInput, weight: w, createdAt: Date.now() }];
+    }
+    setLog(next);
+    setWeightInput("");
+  };
+
+  const deleteEntry = (id) => setLog(log.filter((e) => e.id !== id));
+
+  const points = sorted.map((e) => ({ date: e.date, label: fmtDate(e.date).split(",")[0] + " " + e.date.slice(5), weight: e.weight }));
+  const latest = points[points.length - 1];
+  const first30 = (() => {
+    const cutoff = Date.now() - 30 * 86400000;
+    const inWindow = points.filter((p) => new Date(p.date + "T00:00:00").getTime() >= cutoff);
+    return inWindow[0];
+  })();
+  const change30 = latest && first30 && first30 !== latest ? Math.round((latest.weight - first30.weight) * 10) / 10 : 0;
+  const chartValues = points.map((p) => p.weight);
+  const dataMin = chartValues.length ? Math.min(...chartValues) : 0;
+  const dataMax = chartValues.length ? Math.max(...chartValues) : 1;
+  const pad = (dataMax - dataMin) * 0.15 || dataMax * 0.1 || 5;
+  const yDomain = [Math.max(0, Math.floor(dataMin - pad)), Math.ceil(dataMax + pad)];
+
+  return (
+    <div className="space-y-4">
+      <div className="bg-neutral-900 border border-white/10 rounded-xl p-3.5 flex gap-2">
+        <input
+          type="date"
+          value={dateInput}
+          onChange={(e) => setDateInput(e.target.value)}
+          className="bg-white/5 rounded-lg px-2 py-2.5 text-sm text-neutral-300 outline-none focus:ring-1 focus:ring-sky-400"
+        />
+        <input
+          type="number"
+          inputMode="decimal"
+          value={weightInput}
+          onChange={(e) => setWeightInput(e.target.value)}
+          placeholder="Weight (lbs)"
+          className="flex-1 bg-white/5 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-1 focus:ring-sky-400"
+        />
+        <button onClick={addEntry} disabled={!weightInput.trim()} className="px-4 rounded-lg bg-sky-400 text-white text-sm font-semibold disabled:opacity-40">
+          Log
+        </button>
+      </div>
+
+      {points.length === 0 ? (
+        <p className="text-neutral-500 text-sm text-center pt-6">No body weight entries yet.</p>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 gap-2">
+            <StatCard label="Current" value={`${latest.weight}`} sub="lbs" />
+            <StatCard label="30-Day Change" value={`${change30 >= 0 ? "+" : ""}${change30}`} sub="lbs" color={change30 > 0 ? "#f87171" : change30 < 0 ? "#34d399" : "#a1a1aa"} />
+          </div>
+
+          <div className="bg-neutral-900 border border-white/10 rounded-xl p-3 pt-5 h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart data={points} margin={{ top: 8, right: 12, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="bodyWeightFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#a78bfa" stopOpacity={0.35} />
+                    <stop offset="100%" stopColor="#a78bfa" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid stroke="#27272a" strokeDasharray="3 3" />
+                <XAxis dataKey="label" tick={{ fill: "#71717a", fontSize: 10 }} />
+                <YAxis domain={yDomain} tick={{ fill: "#71717a", fontSize: 10 }} />
+                <Tooltip contentStyle={{ background: "#18181b", border: "1px solid #3f3f46", borderRadius: 8, fontSize: 12 }} />
+                <Area type="monotone" dataKey="weight" stroke="none" fill="url(#bodyWeightFill)" />
+                <Line type="monotone" dataKey="weight" stroke="#a78bfa" strokeWidth={2.5} dot={{ r: 3, fill: "#a78bfa" }} />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
+
+          <div className="space-y-1.5">
+            {sorted.slice().reverse().slice(0, 10).map((e) => (
+              <div key={e.id} className="flex items-center justify-between bg-neutral-900 border border-white/10 rounded-lg px-3 py-2">
+                <span className="text-xs text-neutral-400">{fmtDate(e.date)}</span>
+                <span className="text-sm font-medium text-neutral-100">{e.weight} lbs</span>
+                <button onClick={() => deleteEntry(e.id)} className="p-1 text-neutral-500 active:text-red-400"><Trash2 size={14} /></button>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -1524,6 +1923,11 @@ function CardioTab({ cardioLog, setCardioLog }) {
         {sorted.length === 0 && <p className="text-neutral-500 text-sm text-center pt-6">No runs or hikes logged yet.</p>}
         {sorted.map((a) => {
           const Icon = a.type === "Hike" ? Mountain : Footprints;
+          const { bestPace, bestDistance, bestElevation } = getCardioBests(cardioLog, a.type, a.id);
+          const pace = paceSecPerMile(a.duration, a.distance);
+          const isPaceRecord = pace !== null && bestPace !== null && pace < bestPace;
+          const isDistanceRecord = bestDistance > 0 && (Number(a.distance) || 0) > bestDistance;
+          const isElevationRecord = bestElevation > 0 && (Number(a.elevationGain) || 0) > bestElevation;
           return (
             <div key={a.id} className="bg-neutral-900 border border-white/10 rounded-xl p-3.5">
               <div className="flex items-start justify-between">
@@ -1543,10 +1947,28 @@ function CardioTab({ cardioLog, setCardioLog }) {
                 )}
               </div>
               <div className="grid grid-cols-4 gap-1 mt-2.5 pt-2.5 border-t border-white/10 text-center">
-                <div><p className="text-sm font-semibold text-neutral-100">{Number(a.distance).toFixed(2)}</p><p className="text-[10px] text-neutral-500">miles</p></div>
+                <div>
+                  <p className="text-sm font-semibold text-neutral-100 flex items-center justify-center gap-1">
+                    {Number(a.distance).toFixed(2)}
+                    {isDistanceRecord && <Trophy size={11} className="text-amber-400" title="Longest distance" />}
+                  </p>
+                  <p className="text-[10px] text-neutral-500">miles</p>
+                </div>
                 <div><p className="text-sm font-semibold text-neutral-100">{formatDuration(a.duration)}</p><p className="text-[10px] text-neutral-500">time</p></div>
-                <div><p className="text-sm font-semibold text-neutral-100">{formatPace(a.duration, a.distance)}</p><p className="text-[10px] text-neutral-500">pace</p></div>
-                <div><p className="text-sm font-semibold text-neutral-100">{Math.round(a.elevationGain || 0)}</p><p className="text-[10px] text-neutral-500">ft gain</p></div>
+                <div>
+                  <p className="text-sm font-semibold text-neutral-100 flex items-center justify-center gap-1">
+                    {formatPace(a.duration, a.distance)}
+                    {isPaceRecord && <Trophy size={11} className="text-amber-400" title="Fastest pace" />}
+                  </p>
+                  <p className="text-[10px] text-neutral-500">pace</p>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-neutral-100 flex items-center justify-center gap-1">
+                    {Math.round(a.elevationGain || 0)}
+                    {isElevationRecord && <Trophy size={11} className="text-amber-400" title="Most elevation gain" />}
+                  </p>
+                  <p className="text-[10px] text-neutral-500">ft gain</p>
+                </div>
               </div>
             </div>
           );

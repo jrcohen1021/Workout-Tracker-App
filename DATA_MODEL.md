@@ -4,7 +4,7 @@ Each of these is a `key` in the Supabase `app_state` table (see
 `supabase/migrations/0001_init.sql`): one row per `(user_id, key)`, with the
 JSON shown below stored in that row's `value` jsonb column. Row Level Security
 scopes every row to `auth.uid()`, so each signed-in account gets its own
-private copy of all six keys, synced across devices.
+private copy of all keys, synced across devices.
 
 ## `exercises` — array
 
@@ -37,16 +37,24 @@ the top of `src/App.jsx`):
 {
   "id": "string (unique)",
   "date": "YYYY-MM-DD",
+  "createdAt": "number (Date.now() at creation) — tiebreaker for ordering same-day sessions",
   "name": "string, optional workout name",
   "exercises": [
     {
       "exerciseId": "references exercises[].id",
       "exerciseName": "cached display name at time of logging",
-      "sets": [ { "weight": "number (lbs)", "reps": "number" } ]
+      "sets": [ { "weight": "number (lbs)", "reps": "number" } ],
+      "notes": "string, optional free-text note for this exercise in this session"
     }
   ]
 }
 ```
+
+`date` alone can't order multiple workouts logged the same day, so every
+sort/comparison that needs "most recent" (saving, importing, the Progress
+chart, previous-log lookups) sorts by `date` then falls back to `createdAt`.
+Sessions saved before this field existed simply sort as if `createdAt` were
+`0` — their relative order among same-day ties is whatever it happened to be.
 
 ## `food-log` — array
 
@@ -96,7 +104,32 @@ the top of `src/App.jsx`):
 ```
 
 Structure only — no weights/reps prescribed. Starting a workout from a
-template seeds a fresh draft with these exercises, each with one empty set.
+template seeds a fresh draft with these exercises, each pre-filled with the
+sets from the last time that exercise was logged (or one empty set if it's
+never been logged before).
+
+## `body-weight-log` — array
+
+```json
+{
+  "id": "string (unique)",
+  "date": "YYYY-MM-DD",
+  "weight": "number (lbs)",
+  "createdAt": "number (Date.now() at creation)"
+}
+```
+
+Logging a second entry for a date that already has one overwrites it rather
+than adding a duplicate.
+
+## `exercise-goals` — single object
+
+```json
+{ "exerciseId": "goalWeight (number, lbs)" }
+```
+
+Sparse map keyed by `exercises[].id`; an exercise with no goal set simply has
+no key here.
 
 ## `draft-session` — single object (autosave safety net)
 
