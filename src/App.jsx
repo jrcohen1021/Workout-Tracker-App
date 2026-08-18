@@ -67,9 +67,12 @@ function getPreviousLog(sessions, exerciseId, excludeSessionId) {
   let latest = null;
   sessions.forEach((s) => {
     if (s.id === excludeSessionId) return;
-    if (latest && s.date <= latest.date) return;
     const match = s.exercises.find((e) => e.exerciseId === exerciseId);
-    if (match) latest = { date: s.date, sets: match.sets };
+    if (!match) return;
+    const isOlderOrSame =
+      latest && (s.date < latest.date || (s.date === latest.date && (s.createdAt || 0) <= (latest.createdAt || 0)));
+    if (isOlderOrSame) return;
+    latest = { date: s.date, createdAt: s.createdAt || 0, sets: match.sets };
   });
   return latest;
 }
@@ -283,7 +286,7 @@ export default function WorkoutFoodApp() {
 // ---------- Workouts Tab ----------
 
 function emptyDraft() {
-  return { id: uid(), date: todayStr(), name: "", exercises: [] };
+  return { id: uid(), date: todayStr(), createdAt: Date.now(), name: "", exercises: [] };
 }
 
 function WorkoutsTab({ exercises, setExercises, sessions, setSessions, templates, setTemplates }) {
@@ -326,8 +329,15 @@ function WorkoutsTab({ exercises, setExercises, sessions, setSessions, templates
     setDraft({
       id: uid(),
       date: todayStr(),
+      createdAt: Date.now(),
       name: template.name,
-      exercises: template.exercises.map((e) => ({ exerciseId: e.exerciseId, exerciseName: e.exerciseName, sets: [{ weight: "", reps: "" }] })),
+      exercises: template.exercises.map((e) => {
+        const previousLog = getPreviousLog(sessions, e.exerciseId, null);
+        const sets = previousLog
+          ? previousLog.sets.map((st) => ({ weight: String(st.weight ?? ""), reps: String(st.reps ?? "") }))
+          : [{ weight: "", reps: "" }];
+        return { exerciseId: e.exerciseId, exerciseName: e.exerciseName, sets };
+      }),
     });
     setEditingOriginalId(null);
     setDraftRestored(false);
@@ -354,7 +364,7 @@ function WorkoutsTab({ exercises, setExercises, sessions, setSessions, templates
     } else {
       next = [cleaned, ...sessions];
     }
-    next.sort((a, b) => (a.date < b.date ? 1 : -1));
+    next.sort((a, b) => (a.date !== b.date ? (a.date < b.date ? 1 : -1) : (b.createdAt || 0) - (a.createdAt || 0)));
     setSessions(next);
     setDraft(null);
     setEditingOriginalId(null);
@@ -399,7 +409,9 @@ function WorkoutsTab({ exercises, setExercises, sessions, setSessions, templates
     const newSessions = importFile.sessions.filter((s) => !existingSessionIds.has(s.id));
 
     const mergedExercises = [...exercises, ...newExercises];
-    const mergedSessions = [...sessions, ...newSessions].sort((a, b) => (a.date < b.date ? 1 : -1));
+    const mergedSessions = [...sessions, ...newSessions].sort((a, b) =>
+      a.date !== b.date ? (a.date < b.date ? 1 : -1) : (b.createdAt || 0) - (a.createdAt || 0)
+    );
     setExercises(mergedExercises);
     setSessions(mergedSessions);
     setImportFile(null);
@@ -629,9 +641,13 @@ function SessionEditor({ draft, setDraft, exercises, setExercises, sessions, edi
   }, [restSeconds]);
 
   const addExerciseToSession = (exDef) => {
+    const previousLog = getPreviousLog(sessions, exDef.id, editingOriginalId);
+    const sets = previousLog
+      ? previousLog.sets.map((st) => ({ weight: String(st.weight ?? ""), reps: String(st.reps ?? "") }))
+      : [{ weight: "", reps: "" }];
     setDraft({
       ...draft,
-      exercises: [...draft.exercises, { exerciseId: exDef.id, exerciseName: exDef.name, sets: [{ weight: "", reps: "" }] }],
+      exercises: [...draft.exercises, { exerciseId: exDef.id, exerciseName: exDef.name, sets }],
     });
     setPickerOpen(false);
   };
@@ -1102,7 +1118,7 @@ function ProgressTab({ exercises, sessions }) {
   const points = [];
   sessions
     .slice()
-    .sort((a, b) => (a.date > b.date ? 1 : -1))
+    .sort((a, b) => (a.date !== b.date ? (a.date > b.date ? 1 : -1) : (a.createdAt || 0) - (b.createdAt || 0)))
     .forEach((s) => {
       const matches = s.exercises.filter((e) => e.exerciseId === selectedId);
       if (matches.length === 0) return;
