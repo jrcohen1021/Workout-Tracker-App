@@ -2,18 +2,31 @@
 
 A React app with a workout tracker, progress charts, a food/macro log, and a
 running/hiking tracker. Built on Vite + React, persisted with Supabase
-(Postgres + Auth).
+(Postgres + Auth), and installable to a phone's home screen as a PWA.
 
 ## Stack
 
 - **Frontend:** Vite + React + Tailwind CSS, `recharts` for charts, `lucide-react` for icons.
 - **Persistence:** Supabase Postgres. A single `app_state` table holds one JSON
   row per `(user, key)` for each of `exercises`, `sessions`, `food-log`,
-  `daily-targets`, `cardio-log`, and `draft-session` (see `DATA_MODEL.md`).
-  Row Level Security scopes every row to the signed-in user, so data syncs
-  across devices for the same account.
+  `daily-targets`, `cardio-log`, `workout-templates`, and `draft-session` (see
+  `DATA_MODEL.md`). Row Level Security scopes every row to the signed-in user,
+  so data syncs across devices for the same account.
 - **Auth:** Supabase email/password auth, gating the app behind a sign-in
   screen (`src/components/AuthGate.jsx`).
+- **PWA:** `public/manifest.webmanifest` + icons give a real home-screen icon
+  and full-screen launch when added via "Add to Home Screen".
+
+## Workout features
+
+- **Rest timer** — starts automatically after logging a set (90s default,
+  ±15s adjustable).
+- **Personal records** — a set's weight input flags with a trophy badge when
+  it beats your previous best for that exact exercise variant.
+- **Templates** — save a workout's exercise list (not weights/reps) and start
+  future workouts from it.
+- **Plate calculator** — per exercise, shows which plates to load per side
+  for a target barbell weight.
 
 ## Setup
 

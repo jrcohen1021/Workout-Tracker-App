@@ -4,21 +4,23 @@ Each of these is a `key` in the Supabase `app_state` table (see
 `supabase/migrations/0001_init.sql`): one row per `(user_id, key)`, with the
 JSON shown below stored in that row's `value` jsonb column. Row Level Security
 scopes every row to `auth.uid()`, so each signed-in account gets its own
-private copy of all five keys, synced across devices.
+private copy of all six keys, synced across devices.
 
 ## `exercises` — array
 
 ```json
 {
   "id": "string (unique)",
-  "baseName": "string, e.g. 'Incline Bench Press'",
-  "equipment": "string, e.g. 'Smith Machine' (optional, can be empty)",
-  "name": "string, computed display name: '{baseName} ({equipment})' or just baseName",
+  "name": "string, e.g. 'Incline Bench Press'",
   "muscles": [
     { "group": "Chest|Back|Shoulders|Arms|Legs|Core", "region": "string, e.g. 'Upper Chest'" }
   ]
 }
 ```
+
+No equipment/brand variant tracking — each exercise is just a name. Older
+imported data may still carry legacy `baseName`/`equipment` fields; they're
+ignored.
 
 Muscle taxonomy (fixed set used throughout the app — see `MUSCLE_TAXONOMY` near
 the top of `src/App.jsx`):
@@ -80,6 +82,21 @@ the top of `src/App.jsx`):
   "elevationGain": "number (feet)"
 }
 ```
+
+## `workout-templates` — array
+
+```json
+{
+  "id": "string (unique)",
+  "name": "string, e.g. 'Push Day'",
+  "exercises": [
+    { "exerciseId": "references exercises[].id", "exerciseName": "cached display name" }
+  ]
+}
+```
+
+Structure only — no weights/reps prescribed. Starting a workout from a
+template seeds a fresh draft with these exercises, each with one empty set.
 
 ## `draft-session` — single object (autosave safety net)
 
