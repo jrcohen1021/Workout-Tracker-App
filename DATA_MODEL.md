@@ -51,8 +51,7 @@ the top of `src/App.jsx`):
           "weight": "number (lbs)",
           "reps": "number",
           "warmup": "boolean, optional — excluded from PRs, best-weight, 1RM, and muscle-volume counts",
-          "dropset": "boolean, optional — marks a weight drop continuing the set before it; counts normally toward PRs/volume, purely a display/organizational marker",
-          "rpe": "number 6-10, optional — purely informational, not used in any calculation"
+          "dropset": "boolean, optional — marks a weight drop continuing the set before it; counts normally toward PRs/volume, purely a display/organizational marker"
         }
       ],
       "notes": "string, optional free-text note for this exercise in this session"

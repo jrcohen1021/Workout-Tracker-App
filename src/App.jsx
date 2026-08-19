@@ -866,9 +866,6 @@ function WorkoutsTab({ exercises, setExercises, sessions, setSessions, templates
                                 {st.dropset && (
                                   <span className="text-[9px] font-semibold text-violet-400 bg-violet-400/15 px-1.5 py-0.5 rounded">D</span>
                                 )}
-                                {st.rpe && (
-                                  <span className="text-[9px] font-semibold text-indigo-400 bg-indigo-400/15 px-1.5 py-0.5 rounded">@{st.rpe}</span>
-                                )}
                               </div>
                             ))}
                           </div>
@@ -1262,25 +1259,6 @@ function SessionEditor({ draft, setDraft, exercises, setExercises, sessions, edi
                     <div className="flex gap-1 justify-center">
                       <button onClick={() => adjustSet(exIdx, setIdx, "reps", -1)} className="text-[10px] text-neutral-500 px-1.5 py-0.5 rounded bg-white/5 active:bg-white/10 active:text-neutral-300">-1</button>
                       <button onClick={() => adjustSet(exIdx, setIdx, "reps", 1)} className="text-[10px] text-neutral-500 px-1.5 py-0.5 rounded bg-white/5 active:bg-white/10 active:text-neutral-300">+1</button>
-                    </div>
-                    <span />
-                  </div>
-                  <div className="grid grid-cols-[auto_auto_1fr_1fr_auto] gap-2 mt-1">
-                    <span />
-                    <span />
-                    <div className="col-span-2 flex items-center gap-1">
-                      <span className="text-[10px] text-neutral-600 mr-0.5">RPE</span>
-                      {[6, 7, 8, 9, 10].map((v) => (
-                        <button
-                          key={v}
-                          onClick={() => updateSet(exIdx, setIdx, "rpe", st.rpe === v ? "" : v)}
-                          className={`text-[10px] font-medium w-5 h-5 rounded flex items-center justify-center ${
-                            st.rpe === v ? "bg-indigo-500 text-white" : "bg-white/5 text-neutral-500"
-                          }`}
-                        >
-                          {v}
-                        </button>
-                      ))}
                     </div>
                     <span />
                   </div>
