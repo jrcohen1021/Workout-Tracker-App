@@ -815,14 +815,32 @@ function WorkoutsTab({ exercises, setExercises, sessions, setSessions, templates
                     {isOpen ? <ChevronUp size={18} className="text-neutral-500" /> : <ChevronDown size={18} className="text-neutral-500" />}
                   </button>
                   {isOpen && (
-                    <div className="px-4 pb-4 border-t border-white/10 pt-3 space-y-3">
+                    <div className="px-4 pb-4 border-t border-white/10 pt-3 space-y-2.5">
                       {s.exercises.map((ex, i) => (
-                        <div key={i}>
-                          <p className="text-sm font-medium text-neutral-100">{ex.exerciseName}</p>
-                          <p className="text-xs text-neutral-500">
-                            {ex.sets.map((st, j) => `${st.weight}×${st.reps}${st.warmup ? " (w)" : st.dropset ? " (drop)" : ""}`).join(", ")}
-                          </p>
-                          {ex.notes && <p className="text-xs text-neutral-400 italic mt-0.5">{ex.notes}</p>}
+                        <div key={i} className="bg-white/5 rounded-lg p-3">
+                          <div className="flex items-center justify-between mb-2">
+                            <p className="text-sm font-medium text-neutral-100">{ex.exerciseName}</p>
+                            <p className="text-[11px] text-neutral-500">{ex.sets.length} set{ex.sets.length === 1 ? "" : "s"}</p>
+                          </div>
+                          <div className="space-y-1">
+                            {ex.sets.map((st, j) => (
+                              <div key={j} className="flex items-center gap-2">
+                                <span className="text-xs text-neutral-500 w-3.5">{j + 1}</span>
+                                <span className="text-sm text-neutral-200">
+                                  {st.weight} <span className="text-neutral-500">lbs ×</span> {st.reps}
+                                </span>
+                                {st.warmup && (
+                                  <span className="text-[9px] font-semibold text-amber-400 bg-amber-400/15 px-1.5 py-0.5 rounded">W</span>
+                                )}
+                                {st.dropset && (
+                                  <span className="text-[9px] font-semibold text-violet-400 bg-violet-400/15 px-1.5 py-0.5 rounded">D</span>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                          {ex.notes && (
+                            <p className="text-xs text-neutral-400 italic mt-2 pt-2 border-t border-white/10">{ex.notes}</p>
+                          )}
                         </div>
                       ))}
                       <div className="flex gap-2 pt-1">
