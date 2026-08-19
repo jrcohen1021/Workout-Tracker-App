@@ -46,6 +46,14 @@ function fmtDate(d) {
   return date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
 }
 
+function matchesHistoryQuery(session, query) {
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+  if ((session.name || "").toLowerCase().includes(q)) return true;
+  if (fmtDate(session.date).toLowerCase().includes(q)) return true;
+  return session.exercises.some((ex) => ex.exerciseName.toLowerCase().includes(q));
+}
+
 // ---------- Personal records ----------
 
 function getBestWeightForExercise(sessions, exerciseId, excludeSessionId) {
@@ -55,6 +63,7 @@ function getBestWeightForExercise(sessions, exerciseId, excludeSessionId) {
     s.exercises.forEach((e) => {
       if (e.exerciseId !== exerciseId) return;
       e.sets.forEach((st) => {
+        if (st.warmup) return;
         const w = Number(st.weight) || 0;
         if (w > best) best = w;
       });
@@ -125,8 +134,9 @@ function computeMuscleVolume(sessions, exercises, days) {
     s.exercises.forEach((ex) => {
       const def = exerciseById.get(ex.exerciseId);
       if (!def || !def.muscles || def.muscles.length === 0) return;
+      const workingSets = ex.sets.filter((st) => !st.warmup).length;
       const groups = new Set(def.muscles.map((m) => m.group));
-      groups.forEach((g) => { totals[g] = (totals[g] || 0) + ex.sets.length; });
+      groups.forEach((g) => { totals[g] = (totals[g] || 0) + workingSets; });
     });
   });
   return totals;
@@ -231,6 +241,18 @@ export default function WorkoutFoodApp() {
 
   const [saveError, setSaveError] = useState(false);
 
+  const [undoState, setUndoState] = useState(null); // { message, onUndo } | null
+  const undoTimerRef = useRef(null);
+  const showUndo = (message, onUndo) => {
+    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+    setUndoState({ message, onUndo });
+    undoTimerRef.current = setTimeout(() => setUndoState(null), 6000);
+  };
+  const dismissUndo = () => {
+    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+    setUndoState(null);
+  };
+
   const persistAndSave = async (setter, key, value) => {
     setter(value);
     try {
@@ -325,6 +347,7 @@ export default function WorkoutFoodApp() {
             setSessions={persist.sessions}
             templates={templates}
             setTemplates={persist.templates}
+            showUndo={showUndo}
           />
         )}
         {activeTab === "progress" && (
@@ -335,13 +358,31 @@ export default function WorkoutFoodApp() {
             setBodyWeightLog={persist.bodyWeightLog}
             exerciseGoals={exerciseGoals}
             setExerciseGoals={persist.exerciseGoals}
+            showUndo={showUndo}
           />
         )}
-        {activeTab === "cardio" && <CardioTab cardioLog={cardioLog} setCardioLog={persist.cardioLog} />}
+        {activeTab === "cardio" && <CardioTab cardioLog={cardioLog} setCardioLog={persist.cardioLog} showUndo={showUndo} />}
         {activeTab === "food" && (
-          <FoodTab foodLog={foodLog} setFoodLog={persist.foodLog} targets={targets} setTargets={persist.targets} />
+          <FoodTab foodLog={foodLog} setFoodLog={persist.foodLog} targets={targets} setTargets={persist.targets} showUndo={showUndo} />
         )}
       </main>
+
+      {undoState && (
+        <div
+          className="fixed left-4 right-4 z-40 max-w-md mx-auto"
+          style={{ bottom: "calc(5.5rem + env(safe-area-inset-bottom, 0px))" }}
+        >
+          <div className="bg-neutral-800 border border-white/10 rounded-xl px-4 py-3 flex items-center justify-between gap-3 shadow-2xl">
+            <p className="text-sm text-neutral-200">{undoState.message}</p>
+            <button
+              onClick={() => { undoState.onUndo(); dismissUndo(); }}
+              className="text-sm font-semibold text-emerald-400 shrink-0"
+            >
+              Undo
+            </button>
+          </div>
+        </div>
+      )}
 
       <nav
         className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-neutral-900/90 backdrop-blur-xl border-t border-white/10 flex z-30"
@@ -379,7 +420,7 @@ function emptyDraft() {
   return { id: uid(), date: todayStr(), createdAt: Date.now(), name: "", exercises: [] };
 }
 
-function WorkoutsTab({ exercises, setExercises, sessions, setSessions, templates, setTemplates }) {
+function WorkoutsTab({ exercises, setExercises, sessions, setSessions, templates, setTemplates, showUndo }) {
   const [draft, setDraft] = useState(null); // null = not editing
   const [editingOriginalId, setEditingOriginalId] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
@@ -430,7 +471,7 @@ function WorkoutsTab({ exercises, setExercises, sessions, setSessions, templates
       exercises: last.exercises.map((e) => ({
         exerciseId: e.exerciseId,
         exerciseName: e.exerciseName,
-        sets: e.sets.map((st) => ({ weight: String(st.weight ?? ""), reps: String(st.reps ?? "") })),
+        sets: e.sets.map((st) => ({ weight: String(st.weight ?? ""), reps: String(st.reps ?? ""), warmup: !!st.warmup })),
       })),
     });
     setEditingOriginalId(null);
@@ -446,7 +487,7 @@ function WorkoutsTab({ exercises, setExercises, sessions, setSessions, templates
       exercises: template.exercises.map((e) => {
         const previousLog = getPreviousLog(sessions, e.exerciseId, null);
         const sets = previousLog
-          ? previousLog.sets.map((st) => ({ weight: String(st.weight ?? ""), reps: String(st.reps ?? "") }))
+          ? previousLog.sets.map((st) => ({ weight: String(st.weight ?? ""), reps: String(st.reps ?? ""), warmup: !!st.warmup }))
           : [{ weight: "", reps: "" }];
         return { exerciseId: e.exerciseId, exerciseName: e.exerciseName, sets };
       }),
@@ -465,7 +506,12 @@ function WorkoutsTab({ exercises, setExercises, sessions, setSessions, templates
     setTemplates([...templates, template]);
   };
 
-  const deleteTemplate = (id) => setTemplates(templates.filter((t) => t.id !== id));
+  const deleteTemplate = (id) => {
+    const prev = templates;
+    const deleted = templates.find((t) => t.id === id);
+    setTemplates(templates.filter((t) => t.id !== id));
+    if (deleted) showUndo(`Template "${deleted.name}" deleted.`, () => setTemplates(prev));
+  };
 
   const saveDraft = () => {
     const cleaned = { ...draft, exercises: draft.exercises.filter((e) => e.sets.length > 0) };
@@ -484,8 +530,10 @@ function WorkoutsTab({ exercises, setExercises, sessions, setSessions, templates
   };
 
   const deleteSession = (id) => {
+    const prev = sessions;
     setSessions(sessions.filter((s) => s.id !== id));
     setConfirmDeleteId(null);
+    showUndo("Workout deleted.", () => setSessions(prev));
   };
 
   const grouped = {};
@@ -496,6 +544,7 @@ function WorkoutsTab({ exercises, setExercises, sessions, setSessions, templates
   const [importError, setImportError] = useState("");
   const [confirmClearAll, setConfirmClearAll] = useState(false);
   const [confirmClearExercises, setConfirmClearExercises] = useState(false);
+  const [historyQuery, setHistoryQuery] = useState("");
   const importInputRef = useRef(null);
 
   const onImportFileChange = async (e) => {
@@ -642,14 +691,19 @@ function WorkoutsTab({ exercises, setExercises, sessions, setSessions, templates
       {confirmClearAll && (
         <div className="bg-neutral-900 border border-red-500/30 rounded-xl p-3.5 space-y-2.5">
           <p className="text-sm text-neutral-100">
-            Delete all {sessions.length} workout sessions? Your exercise library stays intact — only history is removed. This can't be undone.
+            Delete all {sessions.length} workout sessions? Your exercise library stays intact — only history is removed. You'll get a brief chance to undo right after.
           </p>
           <div className="flex gap-2">
             <button onClick={() => setConfirmClearAll(false)} className="flex-1 py-2.5 rounded-lg bg-white/5 text-neutral-300 text-sm font-medium">
               Cancel
             </button>
             <button
-              onClick={() => { setSessions([]); setConfirmClearAll(false); }}
+              onClick={() => {
+                const prev = sessions;
+                setSessions([]);
+                setConfirmClearAll(false);
+                showUndo(`${prev.length} workouts deleted.`, () => setSessions(prev));
+              }}
               className="flex-1 py-2.5 rounded-lg bg-red-500/20 text-red-400 text-sm font-semibold"
             >
               Delete All
@@ -668,14 +722,19 @@ function WorkoutsTab({ exercises, setExercises, sessions, setSessions, templates
           <p className="text-sm text-neutral-100">
             Delete all {exercises.length} exercises from your library? Logged workout history keeps its exercise
             names, but until you re-add them, these exercises won't appear in Progress charts, the muscle-group
-            breakdown, or previous-log/PR lookups. This can't be undone.
+            breakdown, or previous-log/PR lookups. You'll get a brief chance to undo right after.
           </p>
           <div className="flex gap-2">
             <button onClick={() => setConfirmClearExercises(false)} className="flex-1 py-2.5 rounded-lg bg-white/5 text-neutral-300 text-sm font-medium">
               Cancel
             </button>
             <button
-              onClick={() => { setExercises([]); setConfirmClearExercises(false); }}
+              onClick={() => {
+                const prev = exercises;
+                setExercises([]);
+                setConfirmClearExercises(false);
+                showUndo(`${prev.length} exercises deleted.`, () => setExercises(prev));
+              }}
               className="flex-1 py-2.5 rounded-lg bg-red-500/20 text-red-400 text-sm font-semibold"
             >
               Delete All
@@ -708,11 +767,27 @@ function WorkoutsTab({ exercises, setExercises, sessions, setSessions, templates
         <p className="text-neutral-500 text-sm text-center pt-10">No workouts logged yet. Start one above.</p>
       )}
 
-      {dates.map((date) => (
+      {sessions.length > 0 && (
+        <input
+          value={historyQuery}
+          onChange={(e) => setHistoryQuery(e.target.value)}
+          placeholder="Search history by workout, exercise, or date"
+          className="w-full bg-neutral-900 border border-white/10 rounded-xl px-3 py-2.5 text-sm placeholder-neutral-600 outline-none focus:border-emerald-400"
+        />
+      )}
+
+      {sessions.length > 0 && historyQuery.trim() && sessions.every((s) => !matchesHistoryQuery(s, historyQuery)) && (
+        <p className="text-neutral-500 text-sm text-center pt-6">No workouts match "{historyQuery.trim()}".</p>
+      )}
+
+      {dates.map((date) => {
+        const daySessions = grouped[date].filter((s) => matchesHistoryQuery(s, historyQuery));
+        if (daySessions.length === 0) return null;
+        return (
         <div key={date}>
           <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wide mb-2">{fmtDate(date)}</p>
           <div className="space-y-2">
-            {grouped[date].map((s) => {
+            {daySessions.map((s) => {
               const isOpen = expandedId === s.id;
               const totalSets = s.exercises.reduce((a, e) => a + e.sets.length, 0);
               return (
@@ -733,7 +808,7 @@ function WorkoutsTab({ exercises, setExercises, sessions, setSessions, templates
                         <div key={i}>
                           <p className="text-sm font-medium text-neutral-100">{ex.exerciseName}</p>
                           <p className="text-xs text-neutral-500">
-                            {ex.sets.map((st, j) => `${st.weight}×${st.reps}`).join(", ")}
+                            {ex.sets.map((st, j) => `${st.weight}×${st.reps}${st.warmup ? " (w)" : ""}`).join(", ")}
                           </p>
                           {ex.notes && <p className="text-xs text-neutral-400 italic mt-0.5">{ex.notes}</p>}
                         </div>
@@ -768,7 +843,8 @@ function WorkoutsTab({ exercises, setExercises, sessions, setSessions, templates
             })}
           </div>
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
@@ -826,7 +902,7 @@ function SessionEditor({ draft, setDraft, exercises, setExercises, sessions, edi
   const addExerciseToSession = (exDef) => {
     const previousLog = getPreviousLog(sessions, exDef.id, editingOriginalId);
     const sets = previousLog
-      ? previousLog.sets.map((st) => ({ weight: String(st.weight ?? ""), reps: String(st.reps ?? "") }))
+      ? previousLog.sets.map((st) => ({ weight: String(st.weight ?? ""), reps: String(st.reps ?? ""), warmup: !!st.warmup }))
       : [{ weight: "", reps: "" }];
     setDraft({
       ...draft,
@@ -848,7 +924,7 @@ function SessionEditor({ draft, setDraft, exercises, setExercises, sessions, edi
   const addSet = (exIdx) => {
     const next = [...draft.exercises];
     const last = next[exIdx].sets[next[exIdx].sets.length - 1];
-    next[exIdx] = { ...next[exIdx], sets: [...next[exIdx].sets, { weight: last?.weight || "", reps: last?.reps || "" }] };
+    next[exIdx] = { ...next[exIdx], sets: [...next[exIdx].sets, { weight: last?.weight || "", reps: last?.reps || "", warmup: false }] };
     setDraft({ ...draft, exercises: next });
     setRestSeconds(90);
   };
@@ -856,6 +932,28 @@ function SessionEditor({ draft, setDraft, exercises, setExercises, sessions, edi
   const removeSet = (exIdx, setIdx) => {
     const next = [...draft.exercises];
     next[exIdx] = { ...next[exIdx], sets: next[exIdx].sets.filter((_, i) => i !== setIdx) };
+    setDraft({ ...draft, exercises: next });
+  };
+
+  const adjustSet = (exIdx, setIdx, field, delta) => {
+    const next = [...draft.exercises];
+    next[exIdx] = {
+      ...next[exIdx],
+      sets: next[exIdx].sets.map((st, i) => {
+        if (i !== setIdx) return st;
+        const current = Number(st[field]) || 0;
+        return { ...st, [field]: String(Math.max(0, current + delta)) };
+      }),
+    };
+    setDraft({ ...draft, exercises: next });
+  };
+
+  const toggleWarmup = (exIdx, setIdx) => {
+    const next = [...draft.exercises];
+    next[exIdx] = {
+      ...next[exIdx],
+      sets: next[exIdx].sets.map((st, i) => (i === setIdx ? { ...st, warmup: !st.warmup } : st)),
+    };
     setDraft({ ...draft, exercises: next });
   };
 
@@ -925,41 +1023,66 @@ function SessionEditor({ draft, setDraft, exercises, setExercises, sessions, edi
               placeholder="Add a note (optional)"
               className="w-full bg-transparent text-xs text-neutral-400 placeholder-neutral-600 outline-none mb-2.5 border-b border-white/5 focus:border-white/20 pb-1.5"
             />
-            <div className="grid grid-cols-[1fr_1fr_1fr_auto] gap-2 mb-1.5 px-1">
+            <div className="grid grid-cols-[auto_auto_1fr_1fr_auto] gap-2 mb-1.5 px-1">
               <span className="text-[11px] text-neutral-500 uppercase">Set</span>
+              <span></span>
               <span className="text-[11px] text-neutral-500 uppercase">Lbs</span>
               <span className="text-[11px] text-neutral-500 uppercase">Reps</span>
               <span></span>
             </div>
             {ex.sets.map((st, setIdx) => {
-              const isPR = priorBest > 0 && (Number(st.weight) || 0) > priorBest;
+              const isPR = !st.warmup && priorBest > 0 && (Number(st.weight) || 0) > priorBest;
               return (
-                <div key={setIdx} className="grid grid-cols-[1fr_1fr_1fr_auto] gap-2 mb-2 items-center">
-                  <span className="text-sm text-neutral-400 pl-1">{setIdx + 1}</span>
-                  <div className="relative">
+                <div key={setIdx} className="mb-2.5">
+                  <div className="grid grid-cols-[auto_auto_1fr_1fr_auto] gap-2 items-center">
+                    <span className="text-sm text-neutral-400 pl-1 w-3.5">{setIdx + 1}</span>
+                    <button
+                      onClick={() => toggleWarmup(exIdx, setIdx)}
+                      title="Mark as warm-up (excluded from PRs and progress)"
+                      className={`text-[10px] font-semibold px-1.5 py-2 rounded-lg border ${
+                        st.warmup ? "bg-amber-400/15 border-amber-400/40 text-amber-400" : "bg-white/5 border-white/10 text-neutral-600"
+                      }`}
+                    >
+                      W
+                    </button>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        inputMode="decimal"
+                        value={st.weight}
+                        onChange={(e) => updateSet(exIdx, setIdx, "weight", e.target.value)}
+                        className={`w-full bg-white/5 rounded-lg px-2 py-2.5 text-center text-base outline-none focus:ring-1 focus:ring-emerald-400 ${isPR ? "ring-2 ring-amber-500" : ""}`}
+                      />
+                      {isPR && (
+                        <span className="absolute -top-2 -right-1.5 bg-amber-500 text-white rounded-full p-0.5" title={`PR! Previous best ${priorBest} lbs`}>
+                          <Trophy size={11} />
+                        </span>
+                      )}
+                    </div>
                     <input
                       type="number"
-                      inputMode="decimal"
-                      value={st.weight}
-                      onChange={(e) => updateSet(exIdx, setIdx, "weight", e.target.value)}
-                      className={`w-full bg-white/5 rounded-lg px-2 py-2.5 text-center text-base outline-none focus:ring-1 focus:ring-emerald-400 ${isPR ? "ring-2 ring-amber-500" : ""}`}
+                      inputMode="numeric"
+                      value={st.reps}
+                      onChange={(e) => updateSet(exIdx, setIdx, "reps", e.target.value)}
+                      className="bg-white/5 rounded-lg px-2 py-2.5 text-center text-base outline-none focus:ring-1 focus:ring-emerald-400"
                     />
-                    {isPR && (
-                      <span className="absolute -top-2 -right-1.5 bg-amber-500 text-white rounded-full p-0.5" title={`PR! Previous best ${priorBest} lbs`}>
-                        <Trophy size={11} />
-                      </span>
-                    )}
+                    <button onClick={() => removeSet(exIdx, setIdx)} className="p-2 text-neutral-500 active:text-red-400">
+                      <X size={16} />
+                    </button>
                   </div>
-                  <input
-                    type="number"
-                    inputMode="numeric"
-                    value={st.reps}
-                    onChange={(e) => updateSet(exIdx, setIdx, "reps", e.target.value)}
-                    className="bg-white/5 rounded-lg px-2 py-2.5 text-center text-base outline-none focus:ring-1 focus:ring-emerald-400"
-                  />
-                  <button onClick={() => removeSet(exIdx, setIdx)} className="p-2 text-neutral-500 active:text-red-400">
-                    <X size={16} />
-                  </button>
+                  <div className="grid grid-cols-[auto_auto_1fr_1fr_auto] gap-2 mt-1">
+                    <span />
+                    <span />
+                    <div className="flex gap-1 justify-center">
+                      <button onClick={() => adjustSet(exIdx, setIdx, "weight", -5)} className="text-[10px] text-neutral-500 px-1.5 py-0.5 rounded bg-white/5 active:bg-white/10 active:text-neutral-300">-5</button>
+                      <button onClick={() => adjustSet(exIdx, setIdx, "weight", 5)} className="text-[10px] text-neutral-500 px-1.5 py-0.5 rounded bg-white/5 active:bg-white/10 active:text-neutral-300">+5</button>
+                    </div>
+                    <div className="flex gap-1 justify-center">
+                      <button onClick={() => adjustSet(exIdx, setIdx, "reps", -1)} className="text-[10px] text-neutral-500 px-1.5 py-0.5 rounded bg-white/5 active:bg-white/10 active:text-neutral-300">-1</button>
+                      <button onClick={() => adjustSet(exIdx, setIdx, "reps", 1)} className="text-[10px] text-neutral-500 px-1.5 py-0.5 rounded bg-white/5 active:bg-white/10 active:text-neutral-300">+1</button>
+                    </div>
+                    <span />
+                  </div>
                 </div>
               );
             })}
@@ -984,6 +1107,7 @@ function SessionEditor({ draft, setDraft, exercises, setExercises, sessions, edi
         <ExercisePicker
           exercises={exercises}
           setExercises={setExercises}
+          sessions={sessions}
           onPick={addExerciseToSession}
           onClose={() => setPickerOpen(false)}
         />
@@ -1130,20 +1254,46 @@ function PlateCalculatorSheet({ initial, onClose }) {
   );
 }
 
-function ExercisePicker({ exercises, setExercises, onPick, onClose }) {
+function ExercisePicker({ exercises, setExercises, sessions, onPick, onClose }) {
   const [query, setQuery] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [newName, setNewName] = useState("");
+  const [editingId, setEditingId] = useState(null);
   const [pendingMuscles, setPendingMuscles] = useState(null); // {name, muscles}
 
-  const filtered = exercises.filter((e) => e.name.toLowerCase().includes(query.toLowerCase()));
+  const lastUsed = new Map();
+  (sessions || []).forEach((s) => {
+    s.exercises.forEach((e) => {
+      const cur = lastUsed.get(e.exerciseId);
+      if (!cur || s.date > cur) lastUsed.set(e.exerciseId, s.date);
+    });
+  });
+
+  const filtered = exercises
+    .filter((e) => e.name.toLowerCase().includes(query.toLowerCase()))
+    .slice()
+    .sort((a, b) => {
+      const aUsed = lastUsed.get(a.id);
+      const bUsed = lastUsed.get(b.id);
+      if (aUsed && bUsed) return aUsed === bUsed ? 0 : aUsed > bUsed ? -1 : 1;
+      if (aUsed) return -1;
+      if (bUsed) return 1;
+      return a.name.localeCompare(b.name);
+    });
 
   const openForm = () => {
+    setEditingId(null);
     setNewName(query.trim());
     setShowForm(true);
   };
 
-  const exactMatch = newName.trim()
+  const startEditExercise = (e) => {
+    setEditingId(e.id);
+    setNewName(e.name);
+    setShowForm(true);
+  };
+
+  const exactMatch = !editingId && newName.trim()
     ? exercises.find((e) => e.name.toLowerCase() === newName.trim().toLowerCase())
     : null;
 
@@ -1158,17 +1308,22 @@ function ExercisePicker({ exercises, setExercises, onPick, onClose }) {
       return;
     }
 
-    setPendingMuscles({ name, muscles: [] });
+    const current = editingId ? exercises.find((e) => e.id === editingId) : null;
+    setPendingMuscles({ name, muscles: current?.muscles || [] });
   };
 
-  const confirmNewExercise = () => {
+  const confirmSaveExercise = () => {
     const { name, muscles } = pendingMuscles;
-    const newEx = { id: uid(), name, muscles };
-    const next = [...exercises, newEx];
-    setExercises(next);
-    onPick(newEx);
+    if (editingId) {
+      setExercises(exercises.map((e) => (e.id === editingId ? { ...e, name, muscles } : e)));
+    } else {
+      const newEx = { id: uid(), name, muscles };
+      setExercises([...exercises, newEx]);
+      onPick(newEx);
+    }
     setPendingMuscles(null);
     setShowForm(false);
+    setEditingId(null);
     setQuery("");
   };
 
@@ -1216,8 +1371,8 @@ function ExercisePicker({ exercises, setExercises, onPick, onClose }) {
           <button onClick={() => setPendingMuscles(null)} className="flex-1 py-2.5 rounded-lg bg-white/5 text-neutral-300 text-sm font-medium">
             Back
           </button>
-          <button onClick={confirmNewExercise} className="flex-1 py-2.5 rounded-lg bg-gradient-to-br from-emerald-600 to-emerald-400 text-white text-sm font-semibold">
-            Add Exercise
+          <button onClick={confirmSaveExercise} className="flex-1 py-2.5 rounded-lg bg-gradient-to-br from-emerald-600 to-emerald-400 text-white text-sm font-semibold">
+            {editingId ? "Save Changes" : "Add Exercise"}
           </button>
         </div>
       </div>
@@ -1228,8 +1383,8 @@ function ExercisePicker({ exercises, setExercises, onPick, onClose }) {
     return (
       <div className="bg-neutral-900 border border-white/10 rounded-xl p-3.5 space-y-2.5">
         <div className="flex items-center justify-between">
-          <p className="font-medium text-white text-sm">New Exercise</p>
-          <button onClick={() => setShowForm(false)} className="p-1 text-neutral-500"><X size={18} /></button>
+          <p className="font-medium text-white text-sm">{editingId ? "Edit Exercise" : "New Exercise"}</p>
+          <button onClick={() => { setShowForm(false); setEditingId(null); }} className="p-1 text-neutral-500"><X size={18} /></button>
         </div>
         <div>
           <p className="text-[11px] text-neutral-500 mb-1">Exercise name</p>
@@ -1247,7 +1402,7 @@ function ExercisePicker({ exercises, setExercises, onPick, onClose }) {
           disabled={!newName.trim()}
           className="w-full py-2.5 rounded-lg bg-gradient-to-br from-emerald-600 to-emerald-400 text-white text-sm font-semibold flex items-center justify-center gap-1.5 disabled:opacity-40"
         >
-          <Plus size={15} /> Add Exercise
+          <Plus size={15} /> {editingId ? "Continue" : "Add Exercise"}
         </button>
       </div>
     );
@@ -1269,16 +1424,20 @@ function ExercisePicker({ exercises, setExercises, onPick, onClose }) {
       </div>
       <div className="max-h-52 overflow-y-auto space-y-1">
         {filtered.map((e) => (
-          <button
-            key={e.id}
-            onClick={() => onPick(e)}
-            className="w-full text-left px-3 py-2.5 rounded-lg bg-white/5 active:bg-white/10 text-sm"
-          >
-            {e.name}
-            {e.muscles?.length > 0 && (
-              <span className="text-neutral-500 text-xs"> · {e.muscles.map((m) => m.region).join(", ")}</span>
-            )}
-          </button>
+          <div key={e.id} className="flex items-center gap-1">
+            <button
+              onClick={() => onPick(e)}
+              className="flex-1 text-left px-3 py-2.5 rounded-lg bg-white/5 active:bg-white/10 text-sm min-w-0"
+            >
+              {e.name}
+              {e.muscles?.length > 0 && (
+                <span className="text-neutral-500 text-xs"> · {e.muscles.map((m) => m.region).join(", ")}</span>
+              )}
+            </button>
+            <button onClick={() => startEditExercise(e)} className="p-2 text-neutral-500 active:text-neutral-300 shrink-0">
+              <Pencil size={14} />
+            </button>
+          </div>
         ))}
       </div>
       <button
@@ -1300,7 +1459,7 @@ const PROGRESS_VIEWS = [
   { id: "bodyweight", label: "Body Weight" },
 ];
 
-function ProgressTab({ exercises, sessions, bodyWeightLog, setBodyWeightLog, exerciseGoals, setExerciseGoals }) {
+function ProgressTab({ exercises, sessions, bodyWeightLog, setBodyWeightLog, exerciseGoals, setExerciseGoals, showUndo }) {
   const [view, setView] = useState("exercises");
 
   return (
@@ -1321,7 +1480,7 @@ function ProgressTab({ exercises, sessions, bodyWeightLog, setBodyWeightLog, exe
         <ExerciseProgress exercises={exercises} sessions={sessions} exerciseGoals={exerciseGoals} setExerciseGoals={setExerciseGoals} />
       )}
       {view === "muscles" && <MuscleVolumeView exercises={exercises} sessions={sessions} />}
-      {view === "bodyweight" && <BodyWeightProgress log={bodyWeightLog} setLog={setBodyWeightLog} />}
+      {view === "bodyweight" && <BodyWeightProgress log={bodyWeightLog} setLog={setBodyWeightLog} showUndo={showUndo} />}
     </div>
   );
 }
@@ -1356,6 +1515,7 @@ function ExerciseProgress({ exercises, sessions, exerciseGoals, setExerciseGoals
       let volume = 0;
       matches.forEach((m) =>
         m.sets.forEach((st) => {
+          if (st.warmup) return;
           const w = Number(st.weight) || 0;
           const r = Number(st.reps) || 0;
           topWeight = Math.max(topWeight, w);
@@ -1519,7 +1679,7 @@ function MuscleVolumeView({ exercises, sessions }) {
   );
 }
 
-function BodyWeightProgress({ log, setLog }) {
+function BodyWeightProgress({ log, setLog, showUndo }) {
   const [weightInput, setWeightInput] = useState("");
   const [dateInput, setDateInput] = useState(todayStr());
 
@@ -1540,7 +1700,11 @@ function BodyWeightProgress({ log, setLog }) {
     setWeightInput("");
   };
 
-  const deleteEntry = (id) => setLog(log.filter((e) => e.id !== id));
+  const deleteEntry = (id) => {
+    const prev = log;
+    setLog(log.filter((e) => e.id !== id));
+    showUndo("Body weight entry deleted.", () => setLog(prev));
+  };
 
   const points = sorted.map((e) => ({ date: e.date, label: fmtDate(e.date).split(",")[0] + " " + e.date.slice(5), weight: e.weight }));
   const latest = points[points.length - 1];
@@ -1633,7 +1797,7 @@ function StatCard({ label, value, sub, color }) {
 
 // ---------- Food Tab ----------
 
-function FoodTab({ foodLog, setFoodLog, targets, setTargets }) {
+function FoodTab({ foodLog, setFoodLog, targets, setTargets, showUndo }) {
   const [date, setDate] = useState(todayStr());
   const [showAdd, setShowAdd] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -1655,7 +1819,11 @@ function FoodTab({ foodLog, setFoodLog, targets, setTargets }) {
     setDate(d.toISOString().slice(0, 10));
   };
 
-  const deleteEntry = (id) => setFoodLog(foodLog.filter((f) => f.id !== id));
+  const deleteEntry = (id) => {
+    const prev = foodLog;
+    setFoodLog(foodLog.filter((f) => f.id !== id));
+    showUndo("Meal entry deleted.", () => setFoodLog(prev));
+  };
 
   const addEntry = (entry) => {
     setFoodLog([...foodLog, { id: uid(), date, time: new Date().toTimeString().slice(0, 5), ...entry }]);
@@ -1836,7 +2004,7 @@ function formatPace(durationSec, distanceMi) {
   return `${m}:${String(s).padStart(2, "0")}/mi`;
 }
 
-function CardioTab({ cardioLog, setCardioLog }) {
+function CardioTab({ cardioLog, setCardioLog, showUndo }) {
   const [showAdd, setShowAdd] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const typesLogged = CARDIO_TYPES.filter((t) => cardioLog.some((a) => a.type === t));
@@ -1851,7 +2019,12 @@ function CardioTab({ cardioLog, setCardioLog }) {
     setCardioLog([{ id: uid(), ...entry }, ...cardioLog]);
     setShowAdd(false);
   };
-  const deleteActivity = (id) => { setCardioLog(cardioLog.filter((a) => a.id !== id)); setConfirmDeleteId(null); };
+  const deleteActivity = (id) => {
+    const prev = cardioLog;
+    setCardioLog(cardioLog.filter((a) => a.id !== id));
+    setConfirmDeleteId(null);
+    showUndo("Activity deleted.", () => setCardioLog(prev));
+  };
 
   const sorted = cardioLog.slice().sort((a, b) => (a.date < b.date ? 1 : -1));
 
