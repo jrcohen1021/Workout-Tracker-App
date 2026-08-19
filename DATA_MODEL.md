@@ -44,7 +44,14 @@ the top of `src/App.jsx`):
     {
       "exerciseId": "references exercises[].id",
       "exerciseName": "cached display name at time of logging",
-      "sets": [ { "weight": "number (lbs)", "reps": "number", "warmup": "boolean, optional — excluded from PRs, best-weight, 1RM, and muscle-volume counts" } ],
+      "sets": [
+        {
+          "weight": "number (lbs)",
+          "reps": "number",
+          "warmup": "boolean, optional — excluded from PRs, best-weight, 1RM, and muscle-volume counts",
+          "dropset": "boolean, optional — marks a weight drop continuing the set before it; counts normally toward PRs/volume, purely a display/organizational marker"
+        }
+      ],
       "notes": "string, optional free-text note for this exercise in this session"
     }
   ]

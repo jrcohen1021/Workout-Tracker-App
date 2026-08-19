@@ -37,6 +37,9 @@ running/hiking tracker. Built on Vite + React, persisted with Supabase
 - **Per-exercise notes** — optional free-text note per exercise, per session.
 - **Warm-up sets** — flag a set as a warm-up to exclude it from PRs,
   best-weight, estimated 1RM, and muscle-volume counts.
+- **Drop sets** — flag a set as a drop (tap the same badge again) to mark it
+  as a continuation of the set before it; still counts normally toward PRs
+  and volume.
 - **Quick-adjust buttons** — ±5 lb and ±1 rep taps on every set, no keyboard
   needed.
 - **Exercise picker** — sorts your most recently logged exercises to the top,
