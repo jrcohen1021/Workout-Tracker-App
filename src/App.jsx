@@ -1067,6 +1067,7 @@ function SessionEditor({ draft, setDraft, exercises, setExercises, sessions, edi
             </div>
             {ex.sets.map((st, setIdx) => {
               const isPR = !st.warmup && priorBest > 0 && (Number(st.weight) || 0) > priorBest;
+              const shouldIncreaseWeight = !st.warmup && !st.dropset && (Number(st.reps) || 0) >= 9;
               return (
                 <div key={setIdx} className="mb-2.5">
                   <div className="grid grid-cols-[auto_auto_1fr_1fr_auto] gap-2 items-center">
@@ -1104,13 +1105,20 @@ function SessionEditor({ draft, setDraft, exercises, setExercises, sessions, edi
                         </span>
                       )}
                     </div>
-                    <input
-                      type="number"
-                      inputMode="numeric"
-                      value={st.reps}
-                      onChange={(e) => updateSet(exIdx, setIdx, "reps", e.target.value)}
-                      className="bg-white/5 rounded-lg px-2 py-2.5 text-center text-base outline-none focus:ring-1 focus:ring-emerald-400"
-                    />
+                    <div className="relative">
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        value={st.reps}
+                        onChange={(e) => updateSet(exIdx, setIdx, "reps", e.target.value)}
+                        className={`w-full bg-white/5 rounded-lg px-2 py-2.5 text-center text-base outline-none focus:ring-1 focus:ring-emerald-400 ${shouldIncreaseWeight ? "ring-2 ring-sky-500" : ""}`}
+                      />
+                      {shouldIncreaseWeight && (
+                        <span className="absolute -top-2 -right-1.5 bg-sky-500 text-white rounded-full p-0.5" title="9+ reps — go up in weight next time">
+                          <TrendingUp size={11} />
+                        </span>
+                      )}
+                    </div>
                     <button onClick={() => removeSet(exIdx, setIdx)} className="p-2 text-neutral-500 active:text-red-400">
                       <X size={16} />
                     </button>
