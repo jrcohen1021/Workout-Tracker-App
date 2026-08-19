@@ -1030,6 +1030,8 @@ function SessionEditor({ draft, setDraft, exercises, setExercises, sessions, edi
         const priorBest = getBestWeightForExercise(sessions, ex.exerciseId, editingOriginalId);
         const previousLog = getPreviousLog(sessions, ex.exerciseId, editingOriginalId);
         const lastWeight = ex.sets[ex.sets.length - 1]?.weight;
+        const suggestIncreaseFromLastTime =
+          previousLog && previousLog.sets.some((st) => !st.warmup && !st.dropset && (Number(st.reps) || 0) >= 9);
         return (
           <div key={exIdx} className="bg-neutral-900 border border-white/10 rounded-xl p-3.5">
             <div className="flex items-center justify-between mb-1">
@@ -1050,6 +1052,11 @@ function SessionEditor({ draft, setDraft, exercises, setExercises, sessions, edi
             {previousLog && (
               <p className="text-xs text-neutral-500 mb-2.5">
                 Last time ({fmtDate(previousLog.date)}): {previousLog.sets.map((st, i) => `${st.weight}×${st.reps}`).join(", ")}
+              </p>
+            )}
+            {suggestIncreaseFromLastTime && (
+              <p className="text-xs text-sky-400 -mt-1.5 mb-2.5 flex items-center gap-1">
+                <TrendingUp size={12} /> Hit 9+ reps last time — try more weight today
               </p>
             )}
             <input

@@ -42,7 +42,8 @@ running/hiking tracker. Built on Vite + React, persisted with Supabase
   and volume.
 - **Progressive overload nudge** — a set's reps input flags with a badge once
   it hits 9+ reps, suggesting more weight next time (skipped for warm-up and
-  drop sets).
+  drop sets). Also shown up front when you re-add an exercise whose most
+  recent log already hit 9+ reps.
 - **Quick-adjust buttons** — ±5 lb and ±1 rep taps on every set, no keyboard
   needed.
 - **Exercise picker** — sorts your most recently logged exercises to the top,
