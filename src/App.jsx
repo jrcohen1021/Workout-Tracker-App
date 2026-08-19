@@ -479,7 +479,7 @@ function WorkoutsTab({ exercises, setExercises, sessions, setSessions, templates
       exercises: last.exercises.map((e) => ({
         exerciseId: e.exerciseId,
         exerciseName: e.exerciseName,
-        sets: e.sets.map((st) => ({ weight: String(st.weight ?? ""), reps: String(st.reps ?? ""), warmup: !!st.warmup })),
+        sets: e.sets.map((st) => ({ weight: String(st.weight ?? ""), reps: String(st.reps ?? ""), warmup: !!st.warmup, dropset: !!st.dropset })),
       })),
     });
     setEditingOriginalId(null);
@@ -495,7 +495,7 @@ function WorkoutsTab({ exercises, setExercises, sessions, setSessions, templates
       exercises: template.exercises.map((e) => {
         const previousLog = getPreviousLog(sessions, e.exerciseId, null);
         const sets = previousLog
-          ? previousLog.sets.map((st) => ({ weight: String(st.weight ?? ""), reps: String(st.reps ?? ""), warmup: !!st.warmup }))
+          ? previousLog.sets.map((st) => ({ weight: String(st.weight ?? ""), reps: String(st.reps ?? ""), warmup: !!st.warmup, dropset: !!st.dropset }))
           : [{ weight: "", reps: "" }];
         return { exerciseId: e.exerciseId, exerciseName: e.exerciseName, sets };
       }),
@@ -691,10 +691,19 @@ function WorkoutsTab({ exercises, setExercises, sessions, setSessions, templates
         />
       )}
 
-      {sessions.length > 0 && !confirmClearAll && (
-        <button onClick={() => setConfirmClearAll(true)} className="text-xs text-neutral-500 active:text-red-400">
-          Clear all workouts
-        </button>
+      {((sessions.length > 0 && !confirmClearAll) || (exercises.length > 0 && !confirmClearExercises)) && (
+        <div className="flex gap-3">
+          {sessions.length > 0 && !confirmClearAll && (
+            <button onClick={() => setConfirmClearAll(true)} className="text-xs text-neutral-500 active:text-red-400">
+              Clear all workouts
+            </button>
+          )}
+          {exercises.length > 0 && !confirmClearExercises && (
+            <button onClick={() => setConfirmClearExercises(true)} className="text-xs text-neutral-500 active:text-red-400">
+              Clear exercise library
+            </button>
+          )}
+        </div>
       )}
       {confirmClearAll && (
         <div className="bg-neutral-900 border border-red-500/30 rounded-xl p-3.5 space-y-2.5">
@@ -720,11 +729,6 @@ function WorkoutsTab({ exercises, setExercises, sessions, setSessions, templates
         </div>
       )}
 
-      {exercises.length > 0 && !confirmClearExercises && (
-        <button onClick={() => setConfirmClearExercises(true)} className="text-xs text-neutral-500 active:text-red-400">
-          Clear exercise library
-        </button>
-      )}
       {confirmClearExercises && (
         <div className="bg-neutral-900 border border-red-500/30 rounded-xl p-3.5 space-y-2.5">
           <p className="text-sm text-neutral-100">
@@ -816,7 +820,7 @@ function WorkoutsTab({ exercises, setExercises, sessions, setSessions, templates
                         <div key={i}>
                           <p className="text-sm font-medium text-neutral-100">{ex.exerciseName}</p>
                           <p className="text-xs text-neutral-500">
-                            {ex.sets.map((st, j) => `${st.weight}×${st.reps}${st.warmup ? " (w)" : ""}`).join(", ")}
+                            {ex.sets.map((st, j) => `${st.weight}×${st.reps}${st.warmup ? " (w)" : st.dropset ? " (drop)" : ""}`).join(", ")}
                           </p>
                           {ex.notes && <p className="text-xs text-neutral-400 italic mt-0.5">{ex.notes}</p>}
                         </div>
@@ -932,7 +936,7 @@ function SessionEditor({ draft, setDraft, exercises, setExercises, sessions, edi
   const addSet = (exIdx) => {
     const next = [...draft.exercises];
     const last = next[exIdx].sets[next[exIdx].sets.length - 1];
-    next[exIdx] = { ...next[exIdx], sets: [...next[exIdx].sets, { weight: last?.weight || "", reps: last?.reps || "", warmup: false }] };
+    next[exIdx] = { ...next[exIdx], sets: [...next[exIdx].sets, { weight: last?.weight || "", reps: last?.reps || "", warmup: false, dropset: false }] };
     setDraft({ ...draft, exercises: next });
     setRestSeconds(90);
   };
@@ -956,11 +960,16 @@ function SessionEditor({ draft, setDraft, exercises, setExercises, sessions, edi
     setDraft({ ...draft, exercises: next });
   };
 
-  const toggleWarmup = (exIdx, setIdx) => {
+  const cycleSetType = (exIdx, setIdx) => {
     const next = [...draft.exercises];
     next[exIdx] = {
       ...next[exIdx],
-      sets: next[exIdx].sets.map((st, i) => (i === setIdx ? { ...st, warmup: !st.warmup } : st)),
+      sets: next[exIdx].sets.map((st, i) => {
+        if (i !== setIdx) return st;
+        if (st.warmup) return { ...st, warmup: false, dropset: true };
+        if (st.dropset) return { ...st, warmup: false, dropset: false };
+        return { ...st, warmup: true, dropset: false };
+      }),
     };
     setDraft({ ...draft, exercises: next });
   };
@@ -1045,13 +1054,23 @@ function SessionEditor({ draft, setDraft, exercises, setExercises, sessions, edi
                   <div className="grid grid-cols-[auto_auto_1fr_1fr_auto] gap-2 items-center">
                     <span className="text-sm text-neutral-400 pl-1 w-3.5">{setIdx + 1}</span>
                     <button
-                      onClick={() => toggleWarmup(exIdx, setIdx)}
-                      title="Mark as warm-up (excluded from PRs and progress)"
+                      onClick={() => cycleSetType(exIdx, setIdx)}
+                      title={
+                        st.warmup
+                          ? "Warm-up set (excluded from PRs and progress) — tap for drop set"
+                          : st.dropset
+                          ? "Drop set — tap to clear"
+                          : "Tap to mark as warm-up, tap again for drop set"
+                      }
                       className={`text-[10px] font-semibold px-1.5 py-2 rounded-lg border ${
-                        st.warmup ? "bg-amber-400/15 border-amber-400/40 text-amber-400" : "bg-white/5 border-white/10 text-neutral-600"
+                        st.warmup
+                          ? "bg-amber-400/15 border-amber-400/40 text-amber-400"
+                          : st.dropset
+                          ? "bg-violet-400/15 border-violet-400/40 text-violet-400"
+                          : "bg-white/5 border-white/10 text-neutral-600"
                       }`}
                     >
-                      W
+                      {st.warmup ? "W" : st.dropset ? "D" : "•"}
                     </button>
                     <div className="relative">
                       <input
