@@ -27,7 +27,8 @@ the top of `src/App.jsx`):
 - Chest: Upper Chest, Mid Chest, Lower Chest
 - Back: Lats, Upper Back/Traps, Lower Back
 - Shoulders: Front Delts, Side Delts, Rear Delts
-- Arms: Biceps, Triceps, Forearms
+- Arms: Biceps (Long Head), Biceps (Short Head), Brachialis, Triceps (Long Head),
+  Triceps (Lateral Head), Triceps (Medial Head), Forearms
 - Legs: Quads, Hamstrings, Glutes, Calves
 - Core: Abs, Obliques
 
