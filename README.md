@@ -47,8 +47,6 @@ running/hiking tracker. Built on Vite + React, persisted with Supabase
 - **Workout duration** — timed automatically from starting a new workout to
   saving it; a live elapsed-time readout shows while you're logging, and the
   total shows in session history.
-- **RPE per set** — optional 6-10 rate-of-perceived-exertion tag per set,
-  purely informational (not used in any PR/1RM/volume calculation).
 - **Supersets/circuits** — group two or more exercises in a session together;
   the rest timer is skipped between exercises within a group and only starts
   after the last one, matching how you'd actually move through a circuit.
