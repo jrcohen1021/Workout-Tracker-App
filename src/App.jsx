@@ -3,7 +3,7 @@ import {
   Dumbbell, TrendingUp, UtensilsCrossed, Plus, X,
   ChevronLeft, ChevronRight, Trash2, Settings, Check, Loader2, ChevronDown,
   ChevronUp, Pencil, Mountain, Footprints, Timer, Trophy, Calculator,
-  Bookmark, LayoutTemplate, Repeat, Flame, Target
+  Bookmark, LayoutTemplate, Repeat, Flame, Target, Link2, Ruler
 } from "lucide-react";
 import {
   ComposedChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
@@ -39,6 +39,8 @@ const GROUP_COLORS = {
   Core: "#facc15",
 };
 
+const MEASUREMENT_TYPES = ["Chest", "Waist", "Hips", "Arms", "Thighs", "Calves"];
+
 const TABS = [
   { id: "workouts", label: "Workouts", icon: Dumbbell, accent: "#34d399", gradient: "linear-gradient(135deg, #34d399, #2dd4bf)" },
   { id: "progress", label: "Progress", icon: TrendingUp, accent: "#38bdf8", gradient: "linear-gradient(135deg, #38bdf8, #22d3ee)" },
@@ -52,6 +54,15 @@ const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
 function fmtDate(d) {
   const date = new Date(d + "T00:00:00");
   return date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+}
+
+function formatWorkoutDuration(sec) {
+  const mins = Math.round(sec / 60);
+  if (mins < 1) return "<1 min";
+  if (mins < 60) return `${mins} min`;
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return m === 0 ? `${h}h` : `${h}h ${m}m`;
 }
 
 function matchesHistoryQuery(session, query) {
@@ -214,6 +225,7 @@ export default function WorkoutFoodApp() {
   const [templates, setTemplates] = useState([]);
   const [bodyWeightLog, setBodyWeightLog] = useState([]);
   const [exerciseGoals, setExerciseGoals] = useState({});
+  const [bodyMeasurementsLog, setBodyMeasurementsLog] = useState([]);
 
   const [loadFailed, setLoadFailed] = useState(false);
   const [loadAttempt, setLoadAttempt] = useState(0);
@@ -222,7 +234,7 @@ export default function WorkoutFoodApp() {
     let cancelled = false;
     setReady(false);
     (async () => {
-      const [ex, se, fl, tg, cl, tp, bw, gl] = await Promise.all([
+      const [ex, se, fl, tg, cl, tp, bw, gl, bm] = await Promise.all([
         loadKey("exercises", []),
         loadKey("sessions", []),
         loadKey("food-log", []),
@@ -231,6 +243,7 @@ export default function WorkoutFoodApp() {
         loadKey("workout-templates", []),
         loadKey("body-weight-log", []),
         loadKey("exercise-goals", {}),
+        loadKey("body-measurements-log", []),
       ]);
       if (cancelled) return;
       setExercises(ex.value);
@@ -241,7 +254,8 @@ export default function WorkoutFoodApp() {
       setTemplates(tp.value);
       setBodyWeightLog(bw.value);
       setExerciseGoals(gl.value);
-      setLoadFailed([ex, se, fl, tg, cl, tp, bw, gl].some((r) => r.failed));
+      setBodyMeasurementsLog(bm.value);
+      setLoadFailed([ex, se, fl, tg, cl, tp, bw, gl, bm].some((r) => r.failed));
       setReady(true);
     })();
     return () => { cancelled = true; };
@@ -284,6 +298,7 @@ export default function WorkoutFoodApp() {
     templates: (v) => persistAndSave(setTemplates, "workout-templates", v),
     bodyWeightLog: (v) => persistAndSave(setBodyWeightLog, "body-weight-log", v),
     exerciseGoals: (v) => persistAndSave(setExerciseGoals, "exercise-goals", v),
+    bodyMeasurementsLog: (v) => persistAndSave(setBodyMeasurementsLog, "body-measurements-log", v),
   };
 
   const activeTabDef = TABS.find((t) => t.id === activeTab) || TABS[0];
@@ -326,7 +341,7 @@ export default function WorkoutFoodApp() {
               Reload
             </button>
             <button
-              onClick={() => exportBackup({ exercises, sessions, foodLog, targets, cardioLog, templates, bodyWeightLog, exerciseGoals })}
+              onClick={() => exportBackup({ exercises, sessions, foodLog, targets, cardioLog, templates, bodyWeightLog, exerciseGoals, bodyMeasurementsLog })}
               className="text-[11px] text-neutral-500 border border-white/10 rounded-full px-2.5 py-1 active:text-neutral-300"
             >
               Backup
@@ -366,6 +381,8 @@ export default function WorkoutFoodApp() {
             setBodyWeightLog={persist.bodyWeightLog}
             exerciseGoals={exerciseGoals}
             setExerciseGoals={persist.exerciseGoals}
+            bodyMeasurementsLog={bodyMeasurementsLog}
+            setBodyMeasurementsLog={persist.bodyMeasurementsLog}
             showUndo={showUndo}
           />
         )}
@@ -425,7 +442,7 @@ export default function WorkoutFoodApp() {
 // ---------- Workouts Tab ----------
 
 function emptyDraft() {
-  return { id: uid(), date: todayStr(), createdAt: Date.now(), name: "", exercises: [] };
+  return { id: uid(), date: todayStr(), createdAt: Date.now(), startedAt: Date.now(), name: "", exercises: [] };
 }
 
 function WorkoutsTab({ exercises, setExercises, sessions, setSessions, templates, setTemplates, showUndo }) {
@@ -475,10 +492,12 @@ function WorkoutsTab({ exercises, setExercises, sessions, setSessions, templates
       id: uid(),
       date: todayStr(),
       createdAt: Date.now(),
+      startedAt: Date.now(),
       name: last.name,
       exercises: last.exercises.map((e) => ({
         exerciseId: e.exerciseId,
         exerciseName: e.exerciseName,
+        supersetGroup: e.supersetGroup || null,
         sets: e.sets.map((st) => ({ weight: String(st.weight ?? ""), reps: String(st.reps ?? ""), warmup: !!st.warmup, dropset: !!st.dropset })),
       })),
     });
@@ -491,13 +510,14 @@ function WorkoutsTab({ exercises, setExercises, sessions, setSessions, templates
       id: uid(),
       date: todayStr(),
       createdAt: Date.now(),
+      startedAt: Date.now(),
       name: template.name,
       exercises: template.exercises.map((e) => {
         const previousLog = getPreviousLog(sessions, e.exerciseId, null);
         const sets = previousLog
           ? previousLog.sets.map((st) => ({ weight: String(st.weight ?? ""), reps: String(st.reps ?? ""), warmup: !!st.warmup, dropset: !!st.dropset }))
           : [{ weight: "", reps: "" }];
-        return { exerciseId: e.exerciseId, exerciseName: e.exerciseName, sets };
+        return { exerciseId: e.exerciseId, exerciseName: e.exerciseName, supersetGroup: e.supersetGroup || null, sets };
       }),
     });
     setEditingOriginalId(null);
@@ -509,7 +529,7 @@ function WorkoutsTab({ exercises, setExercises, sessions, setSessions, templates
     const template = {
       id: uid(),
       name,
-      exercises: exercisesList.map((e) => ({ exerciseId: e.exerciseId, exerciseName: e.exerciseName })),
+      exercises: exercisesList.map((e) => ({ exerciseId: e.exerciseId, exerciseName: e.exerciseName, supersetGroup: e.supersetGroup || null })),
     };
     setTemplates([...templates, template]);
   };
@@ -522,8 +542,12 @@ function WorkoutsTab({ exercises, setExercises, sessions, setSessions, templates
   };
 
   const saveDraft = () => {
-    const cleaned = { ...draft, exercises: draft.exercises.filter((e) => e.sets.length > 0) };
+    const { startedAt, ...draftRest } = draft;
+    const cleaned = { ...draftRest, exercises: draft.exercises.filter((e) => e.sets.length > 0) };
     if (cleaned.exercises.length === 0) return;
+    if (!editingOriginalId && startedAt) {
+      cleaned.durationSec = Math.max(0, Math.round((Date.now() - startedAt) / 1000));
+    }
     let next;
     if (editingOriginalId) {
       next = sessions.map((s) => (s.id === editingOriginalId ? cleaned : s));
@@ -810,7 +834,9 @@ function WorkoutsTab({ exercises, setExercises, sessions, setSessions, templates
                   >
                     <div>
                       <p className="font-medium text-white">{s.name || "Workout"}</p>
-                      <p className="text-xs text-neutral-500">{s.exercises.length} exercises · {totalSets} sets</p>
+                      <p className="text-xs text-neutral-500">
+                        {s.exercises.length} exercises · {totalSets} sets{s.durationSec ? ` · ${formatWorkoutDuration(s.durationSec)}` : ""}
+                      </p>
                     </div>
                     {isOpen ? <ChevronUp size={18} className="text-neutral-500" /> : <ChevronDown size={18} className="text-neutral-500" />}
                   </button>
@@ -822,6 +848,11 @@ function WorkoutsTab({ exercises, setExercises, sessions, setSessions, templates
                             <p className="text-sm font-medium text-neutral-100">{ex.exerciseName}</p>
                             <p className="text-[11px] text-neutral-500">{ex.sets.length} set{ex.sets.length === 1 ? "" : "s"}</p>
                           </div>
+                          {ex.supersetGroup && (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-fuchsia-400 bg-fuchsia-400/15 px-1.5 py-0.5 rounded mb-1.5">
+                              <Link2 size={10} /> Superset
+                            </span>
+                          )}
                           <div className="space-y-1">
                             {ex.sets.map((st, j) => (
                               <div key={j} className="flex items-center gap-2">
@@ -834,6 +865,9 @@ function WorkoutsTab({ exercises, setExercises, sessions, setSessions, templates
                                 )}
                                 {st.dropset && (
                                   <span className="text-[9px] font-semibold text-violet-400 bg-violet-400/15 px-1.5 py-0.5 rounded">D</span>
+                                )}
+                                {st.rpe && (
+                                  <span className="text-[9px] font-semibold text-indigo-400 bg-indigo-400/15 px-1.5 py-0.5 rounded">@{st.rpe}</span>
                                 )}
                               </div>
                             ))}
@@ -922,6 +956,9 @@ function SessionEditor({ draft, setDraft, exercises, setExercises, sessions, edi
   const [savingTemplate, setSavingTemplate] = useState(false);
   const [templateName, setTemplateName] = useState("");
   const [plateCalcFor, setPlateCalcFor] = useState(null); // { exerciseName, weight } | null
+  const [groupingMode, setGroupingMode] = useState(false);
+  const [selectedForGroup, setSelectedForGroup] = useState([]); // exercise indices
+  const [, forceTick] = useState(0);
 
   useEffect(() => {
     if (restSeconds === null || restSeconds <= 0) return;
@@ -929,14 +966,21 @@ function SessionEditor({ draft, setDraft, exercises, setExercises, sessions, edi
     return () => clearTimeout(t);
   }, [restSeconds]);
 
+  // Ticks the live elapsed-time display without needing per-second precision.
+  useEffect(() => {
+    if (!draft.startedAt) return;
+    const t = setInterval(() => forceTick((n) => n + 1), 30000);
+    return () => clearInterval(t);
+  }, [draft.startedAt]);
+
   const addExerciseToSession = (exDef) => {
     const previousLog = getPreviousLog(sessions, exDef.id, editingOriginalId);
     const sets = previousLog
-      ? previousLog.sets.map((st) => ({ weight: String(st.weight ?? ""), reps: String(st.reps ?? ""), warmup: !!st.warmup }))
+      ? previousLog.sets.map((st) => ({ weight: String(st.weight ?? ""), reps: String(st.reps ?? ""), warmup: !!st.warmup, dropset: !!st.dropset }))
       : [{ weight: "", reps: "" }];
     setDraft({
       ...draft,
-      exercises: [...draft.exercises, { exerciseId: exDef.id, exerciseName: exDef.name, sets }],
+      exercises: [...draft.exercises, { exerciseId: exDef.id, exerciseName: exDef.name, supersetGroup: null, sets }],
     });
     setPickerOpen(false);
   };
@@ -951,12 +995,19 @@ function SessionEditor({ draft, setDraft, exercises, setExercises, sessions, edi
     setDraft({ ...draft, exercises: next });
   };
 
+  const isLastInSupersetGroup = (exIdx) => {
+    const group = draft.exercises[exIdx].supersetGroup;
+    if (!group) return true;
+    const groupIndices = draft.exercises.map((e, i) => (e.supersetGroup === group ? i : -1)).filter((i) => i >= 0);
+    return exIdx === groupIndices[groupIndices.length - 1];
+  };
+
   const addSet = (exIdx) => {
     const next = [...draft.exercises];
     const last = next[exIdx].sets[next[exIdx].sets.length - 1];
     next[exIdx] = { ...next[exIdx], sets: [...next[exIdx].sets, { weight: last?.weight || "", reps: last?.reps || "", warmup: false, dropset: false }] };
     setDraft({ ...draft, exercises: next });
-    setRestSeconds(90);
+    if (isLastInSupersetGroup(exIdx)) setRestSeconds(90);
   };
 
   const removeSet = (exIdx, setIdx) => {
@@ -998,6 +1049,24 @@ function SessionEditor({ draft, setDraft, exercises, setExercises, sessions, edi
     setDraft({ ...draft, exercises: next });
   };
 
+  const toggleSelectedForGroup = (exIdx) => {
+    setSelectedForGroup((prev) => (prev.includes(exIdx) ? prev.filter((i) => i !== exIdx) : [...prev, exIdx]));
+  };
+
+  const confirmGrouping = () => {
+    if (selectedForGroup.length < 2) return;
+    const groupId = uid();
+    const next = draft.exercises.map((e, i) => (selectedForGroup.includes(i) ? { ...e, supersetGroup: groupId } : e));
+    setDraft({ ...draft, exercises: next });
+    setGroupingMode(false);
+    setSelectedForGroup([]);
+  };
+
+  const ungroupExercises = (groupId) => {
+    const next = draft.exercises.map((e) => (e.supersetGroup === groupId ? { ...e, supersetGroup: null } : e));
+    setDraft({ ...draft, exercises: next });
+  };
+
   const confirmSaveTemplate = () => {
     if (!templateName.trim()) return;
     onSaveTemplate(templateName.trim(), draft.exercises);
@@ -1026,6 +1095,39 @@ function SessionEditor({ draft, setDraft, exercises, setExercises, sessions, edi
         />
       </div>
 
+      {draft.startedAt && (
+        <p className="text-xs text-neutral-500 flex items-center gap-1.5 -mt-2">
+          <Timer size={12} /> {formatWorkoutDuration(Math.round((Date.now() - draft.startedAt) / 1000))} elapsed
+        </p>
+      )}
+
+      {draft.exercises.length >= 2 && (
+        groupingMode ? (
+          <div className="flex gap-2">
+            <button
+              onClick={() => { setGroupingMode(false); setSelectedForGroup([]); }}
+              className="flex-1 py-2 rounded-lg bg-white/5 text-neutral-300 text-sm font-medium"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={confirmGrouping}
+              disabled={selectedForGroup.length < 2}
+              className="flex-1 py-2 rounded-lg bg-gradient-to-br from-fuchsia-600 to-fuchsia-400 text-white text-sm font-semibold disabled:opacity-40"
+            >
+              Group Selected ({selectedForGroup.length})
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => setGroupingMode(true)}
+            className="w-full py-2 rounded-lg border border-dashed border-white/15 text-neutral-500 text-sm font-medium flex items-center justify-center gap-1.5 active:bg-neutral-900"
+          >
+            <Link2 size={15} /> Group as Superset
+          </button>
+        )
+      )}
+
       {draft.exercises.map((ex, exIdx) => {
         const priorBest = getBestWeightForExercise(sessions, ex.exerciseId, editingOriginalId);
         const previousLog = getPreviousLog(sessions, ex.exerciseId, editingOriginalId);
@@ -1035,8 +1137,18 @@ function SessionEditor({ draft, setDraft, exercises, setExercises, sessions, edi
         return (
           <div key={exIdx} className="bg-neutral-900 border border-white/10 rounded-xl p-3.5">
             <div className="flex items-center justify-between mb-1">
-              <p className="font-medium text-white">{ex.exerciseName}</p>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-2 min-w-0">
+                {groupingMode && (
+                  <input
+                    type="checkbox"
+                    checked={selectedForGroup.includes(exIdx)}
+                    onChange={() => toggleSelectedForGroup(exIdx)}
+                    className="w-4 h-4 shrink-0 accent-fuchsia-500"
+                  />
+                )}
+                <p className="font-medium text-white truncate">{ex.exerciseName}</p>
+              </div>
+              <div className="flex items-center gap-1 shrink-0">
                 <button
                   onClick={() => setPlateCalcFor({ exerciseName: ex.exerciseName, weight: lastWeight || "" })}
                   className="p-1 text-neutral-500 active:text-neutral-300"
@@ -1049,6 +1161,16 @@ function SessionEditor({ draft, setDraft, exercises, setExercises, sessions, edi
                 </button>
               </div>
             </div>
+            {ex.supersetGroup && !groupingMode && (
+              <div className="flex items-center gap-1.5 mb-2">
+                <span className="flex items-center gap-1 text-[10px] font-semibold text-fuchsia-400 bg-fuchsia-400/15 px-1.5 py-0.5 rounded">
+                  <Link2 size={10} /> Superset
+                </span>
+                <button onClick={() => ungroupExercises(ex.supersetGroup)} className="text-[10px] text-neutral-500">
+                  Ungroup
+                </button>
+              </div>
+            )}
             {previousLog && (
               <p className="text-xs text-neutral-500 mb-2.5">
                 Last time ({fmtDate(previousLog.date)}): {previousLog.sets.map((st, i) => `${st.weight}×${st.reps}`).join(", ")}
@@ -1140,6 +1262,25 @@ function SessionEditor({ draft, setDraft, exercises, setExercises, sessions, edi
                     <div className="flex gap-1 justify-center">
                       <button onClick={() => adjustSet(exIdx, setIdx, "reps", -1)} className="text-[10px] text-neutral-500 px-1.5 py-0.5 rounded bg-white/5 active:bg-white/10 active:text-neutral-300">-1</button>
                       <button onClick={() => adjustSet(exIdx, setIdx, "reps", 1)} className="text-[10px] text-neutral-500 px-1.5 py-0.5 rounded bg-white/5 active:bg-white/10 active:text-neutral-300">+1</button>
+                    </div>
+                    <span />
+                  </div>
+                  <div className="grid grid-cols-[auto_auto_1fr_1fr_auto] gap-2 mt-1">
+                    <span />
+                    <span />
+                    <div className="col-span-2 flex items-center gap-1">
+                      <span className="text-[10px] text-neutral-600 mr-0.5">RPE</span>
+                      {[6, 7, 8, 9, 10].map((v) => (
+                        <button
+                          key={v}
+                          onClick={() => updateSet(exIdx, setIdx, "rpe", st.rpe === v ? "" : v)}
+                          className={`text-[10px] font-medium w-5 h-5 rounded flex items-center justify-center ${
+                            st.rpe === v ? "bg-indigo-500 text-white" : "bg-white/5 text-neutral-500"
+                          }`}
+                        >
+                          {v}
+                        </button>
+                      ))}
                     </div>
                     <span />
                   </div>
@@ -1516,10 +1657,21 @@ function ExercisePicker({ exercises, setExercises, sessions, onPick, onClose }) 
 const PROGRESS_VIEWS = [
   { id: "exercises", label: "Exercises" },
   { id: "muscles", label: "Muscles" },
-  { id: "bodyweight", label: "Body Weight" },
+  { id: "bodyweight", label: "Weight" },
+  { id: "measurements", label: "Measure" },
 ];
 
-function ProgressTab({ exercises, sessions, bodyWeightLog, setBodyWeightLog, exerciseGoals, setExerciseGoals, showUndo }) {
+function ProgressTab({
+  exercises,
+  sessions,
+  bodyWeightLog,
+  setBodyWeightLog,
+  exerciseGoals,
+  setExerciseGoals,
+  bodyMeasurementsLog,
+  setBodyMeasurementsLog,
+  showUndo,
+}) {
   const [view, setView] = useState("exercises");
 
   return (
@@ -1541,6 +1693,9 @@ function ProgressTab({ exercises, sessions, bodyWeightLog, setBodyWeightLog, exe
       )}
       {view === "muscles" && <MuscleVolumeView exercises={exercises} sessions={sessions} />}
       {view === "bodyweight" && <BodyWeightProgress log={bodyWeightLog} setLog={setBodyWeightLog} showUndo={showUndo} />}
+      {view === "measurements" && (
+        <BodyMeasurementsProgress log={bodyMeasurementsLog} setLog={setBodyMeasurementsLog} showUndo={showUndo} />
+      )}
     </div>
   );
 }
@@ -1835,6 +1990,124 @@ function BodyWeightProgress({ log, setLog, showUndo }) {
               <div key={e.id} className="flex items-center justify-between bg-neutral-900 border border-white/10 rounded-lg px-3 py-2">
                 <span className="text-xs text-neutral-400">{fmtDate(e.date)}</span>
                 <span className="text-sm font-medium text-neutral-100">{e.weight} lbs</span>
+                <button onClick={() => deleteEntry(e.id)} className="p-1 text-neutral-500 active:text-red-400"><Trash2 size={14} /></button>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function BodyMeasurementsProgress({ log, setLog, showUndo }) {
+  const [type, setType] = useState(MEASUREMENT_TYPES[0]);
+  const [valueInput, setValueInput] = useState("");
+  const [dateInput, setDateInput] = useState(todayStr());
+
+  const filtered = log.filter((e) => e.type === type);
+  const sorted = filtered.slice().sort((a, b) => (a.date !== b.date ? (a.date > b.date ? 1 : -1) : (a.createdAt || 0) - (b.createdAt || 0)));
+
+  const addEntry = () => {
+    const v = Number(valueInput);
+    if (!(v > 0)) return;
+    const existingIdx = sorted.findIndex((e) => e.date === dateInput);
+    let next;
+    if (existingIdx >= 0) {
+      const existingId = sorted[existingIdx].id;
+      next = log.map((e) => (e.id === existingId ? { ...e, value: v } : e));
+    } else {
+      next = [...log, { id: uid(), date: dateInput, type, value: v, createdAt: Date.now() }];
+    }
+    setLog(next);
+    setValueInput("");
+  };
+
+  const deleteEntry = (id) => {
+    const prev = log;
+    setLog(log.filter((e) => e.id !== id));
+    showUndo("Measurement entry deleted.", () => setLog(prev));
+  };
+
+  const points = sorted.map((e) => ({ date: e.date, label: fmtDate(e.date).split(",")[0] + " " + e.date.slice(5), value: e.value }));
+  const latest = points[points.length - 1];
+  const first30 = (() => {
+    const cutoff = Date.now() - 30 * 86400000;
+    const inWindow = points.filter((p) => new Date(p.date + "T00:00:00").getTime() >= cutoff);
+    return inWindow[0];
+  })();
+  const change30 = latest && first30 && first30 !== latest ? Math.round((latest.value - first30.value) * 10) / 10 : 0;
+  const chartValues = points.map((p) => p.value);
+  const dataMin = chartValues.length ? Math.min(...chartValues) : 0;
+  const dataMax = chartValues.length ? Math.max(...chartValues) : 1;
+  const pad = (dataMax - dataMin) * 0.15 || dataMax * 0.1 || 1;
+  const yDomain = [Math.max(0, Math.floor(dataMin - pad)), Math.ceil(dataMax + pad)];
+
+  return (
+    <div className="space-y-4">
+      <select
+        value={type}
+        onChange={(e) => { setType(e.target.value); setValueInput(""); }}
+        className="w-full bg-neutral-900 border border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none"
+      >
+        {MEASUREMENT_TYPES.map((t) => (
+          <option key={t} value={t}>{t}</option>
+        ))}
+      </select>
+
+      <div className="bg-neutral-900 border border-white/10 rounded-xl p-3.5 flex gap-2">
+        <input
+          type="date"
+          value={dateInput}
+          onChange={(e) => setDateInput(e.target.value)}
+          className="bg-white/5 rounded-lg px-2 py-2.5 text-sm text-neutral-300 outline-none focus:ring-1 focus:ring-sky-400"
+        />
+        <input
+          type="number"
+          inputMode="decimal"
+          value={valueInput}
+          onChange={(e) => setValueInput(e.target.value)}
+          placeholder="Inches"
+          className="flex-1 bg-white/5 rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-1 focus:ring-sky-400"
+        />
+        <button onClick={addEntry} disabled={!valueInput.trim()} className="px-4 rounded-lg bg-sky-400 text-white text-sm font-semibold disabled:opacity-40">
+          Log
+        </button>
+      </div>
+
+      {points.length === 0 ? (
+        <p className="text-neutral-500 text-sm text-center pt-6">No {type.toLowerCase()} measurements logged yet.</p>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 gap-2">
+            <StatCard label="Current" value={`${latest.value}`} sub="in" />
+            <StatCard label="30-Day Change" value={`${change30 >= 0 ? "+" : ""}${change30}`} sub="in" color={change30 > 0 ? "#34d399" : change30 < 0 ? "#f87171" : "#a1a1aa"} />
+          </div>
+
+          <div className="bg-neutral-900 border border-white/10 rounded-xl p-3 pt-5 h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart data={points} margin={{ top: 8, right: 12, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="measurementFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#2dd4bf" stopOpacity={0.35} />
+                    <stop offset="100%" stopColor="#2dd4bf" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid stroke="#27272a" strokeDasharray="3 3" />
+                <XAxis dataKey="label" tick={{ fill: "#71717a", fontSize: 10 }} />
+                <YAxis domain={yDomain} tick={{ fill: "#71717a", fontSize: 10 }} />
+                <Tooltip contentStyle={{ background: "#18181b", border: "1px solid #3f3f46", borderRadius: 8, fontSize: 12 }} />
+                <Area type="monotone" dataKey="value" stroke="none" fill="url(#measurementFill)" />
+                <Line type="monotone" dataKey="value" stroke="#2dd4bf" strokeWidth={2.5} dot={{ r: 3, fill: "#2dd4bf" }} />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
+
+          <div className="space-y-1.5">
+            {sorted.slice().reverse().slice(0, 10).map((e) => (
+              <div key={e.id} className="flex items-center justify-between bg-neutral-900 border border-white/10 rounded-lg px-3 py-2">
+                <span className="text-xs text-neutral-400">{fmtDate(e.date)}</span>
+                <span className="text-sm font-medium text-neutral-100">{e.value} in</span>
                 <button onClick={() => deleteEntry(e.id)} className="p-1 text-neutral-500 active:text-red-400"><Trash2 size={14} /></button>
               </div>
             ))}

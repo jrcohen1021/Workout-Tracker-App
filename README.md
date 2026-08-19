@@ -10,9 +10,9 @@ running/hiking tracker. Built on Vite + React, persisted with Supabase
 - **Persistence:** Supabase Postgres. A single `app_state` table holds one JSON
   row per `(user, key)` for each of `exercises`, `sessions`, `food-log`,
   `daily-targets`, `cardio-log`, `workout-templates`, `body-weight-log`,
-  `exercise-goals`, and `draft-session` (see `DATA_MODEL.md`). Row Level
-  Security scopes every row to the signed-in user, so data syncs across
-  devices for the same account.
+  `exercise-goals`, `body-measurements-log`, and `draft-session` (see
+  `DATA_MODEL.md`). Row Level Security scopes every row to the signed-in
+  user, so data syncs across devices for the same account.
 - **Auth:** Supabase email/password auth, gating the app behind a sign-in
   screen (`src/components/AuthGate.jsx`).
 - **PWA:** `public/manifest.webmanifest` + icons give a real home-screen icon
@@ -44,6 +44,16 @@ running/hiking tracker. Built on Vite + React, persisted with Supabase
   it hits 9+ reps, suggesting more weight next time (skipped for warm-up and
   drop sets). Also shown up front when you re-add an exercise whose most
   recent log already hit 9+ reps.
+- **Workout duration** — timed automatically from starting a new workout to
+  saving it; a live elapsed-time readout shows while you're logging, and the
+  total shows in session history.
+- **RPE per set** — optional 6-10 rate-of-perceived-exertion tag per set,
+  purely informational (not used in any PR/1RM/volume calculation).
+- **Supersets/circuits** — group two or more exercises in a session together;
+  the rest timer is skipped between exercises within a group and only starts
+  after the last one, matching how you'd actually move through a circuit.
+- **Body measurements** — track chest/waist/hips/arms/thighs/calves over
+  time, each with its own trend chart (Progress tab → Measure).
 - **Quick-adjust buttons** — ±5 lb and ±1 rep taps on every set, no keyboard
   needed.
 - **Exercise picker** — sorts your most recently logged exercises to the top,

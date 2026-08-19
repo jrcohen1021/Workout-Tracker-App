@@ -39,17 +39,20 @@ the top of `src/App.jsx`):
   "id": "string (unique)",
   "date": "YYYY-MM-DD",
   "createdAt": "number (Date.now() at creation) — tiebreaker for ordering same-day sessions",
+  "durationSec": "number, optional — elapsed time from starting a new workout to saving it; not recomputed when editing an existing session",
   "name": "string, optional workout name",
   "exercises": [
     {
       "exerciseId": "references exercises[].id",
       "exerciseName": "cached display name at time of logging",
+      "supersetGroup": "string, optional — exercises sharing the same id within a session are grouped as a superset/circuit",
       "sets": [
         {
           "weight": "number (lbs)",
           "reps": "number",
           "warmup": "boolean, optional — excluded from PRs, best-weight, 1RM, and muscle-volume counts",
-          "dropset": "boolean, optional — marks a weight drop continuing the set before it; counts normally toward PRs/volume, purely a display/organizational marker"
+          "dropset": "boolean, optional — marks a weight drop continuing the set before it; counts normally toward PRs/volume, purely a display/organizational marker",
+          "rpe": "number 6-10, optional — purely informational, not used in any calculation"
         }
       ],
       "notes": "string, optional free-text note for this exercise in this session"
@@ -63,6 +66,11 @@ sort/comparison that needs "most recent" (saving, importing, the Progress
 chart, previous-log lookups) sorts by `date` then falls back to `createdAt`.
 Sessions saved before this field existed simply sort as if `createdAt` were
 `0` — their relative order among same-day ties is whatever it happened to be.
+
+While a workout is in progress, the in-memory draft also carries a
+`startedAt` timestamp (set when the draft is created); it's used to compute
+`durationSec` at save time and is stripped before persisting, so it never
+appears in a saved session.
 
 ## `food-log` — array
 
@@ -106,7 +114,11 @@ Sessions saved before this field existed simply sort as if `createdAt` were
   "id": "string (unique)",
   "name": "string, e.g. 'Push Day'",
   "exercises": [
-    { "exerciseId": "references exercises[].id", "exerciseName": "cached display name" }
+    {
+      "exerciseId": "references exercises[].id",
+      "exerciseName": "cached display name",
+      "supersetGroup": "string, optional — carried over when a workout is started from this template"
+    }
   ]
 }
 ```
@@ -138,6 +150,22 @@ than adding a duplicate.
 
 Sparse map keyed by `exercises[].id`; an exercise with no goal set simply has
 no key here.
+
+## `body-measurements-log` — array
+
+```json
+{
+  "id": "string (unique)",
+  "date": "YYYY-MM-DD",
+  "type": "Chest|Waist|Hips|Arms|Thighs|Calves",
+  "value": "number (inches)",
+  "createdAt": "number (Date.now() at creation)"
+}
+```
+
+Same shape and overwrite-on-same-date behavior as `body-weight-log`, just
+with a `type` field since one log holds every measurement kind. See
+`MEASUREMENT_TYPES` near the top of `src/App.jsx` for the fixed type list.
 
 ## `draft-session` — single object (autosave safety net)
 
