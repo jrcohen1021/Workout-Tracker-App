@@ -43,7 +43,7 @@ the top of `src/App.jsx`):
     {
       "exerciseId": "references exercises[].id",
       "exerciseName": "cached display name at time of logging",
-      "sets": [ { "weight": "number (lbs)", "reps": "number" } ],
+      "sets": [ { "weight": "number (lbs)", "reps": "number", "warmup": "boolean, optional — excluded from PRs, best-weight, 1RM, and muscle-volume counts" } ],
       "notes": "string, optional free-text note for this exercise in this session"
     }
   ]

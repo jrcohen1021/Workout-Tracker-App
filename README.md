@@ -35,6 +35,16 @@ running/hiking tracker. Built on Vite + React, persisted with Supabase
 - **Streak + heatmap** — current workout streak and a 10-week activity
   heatmap on the Workouts tab.
 - **Per-exercise notes** — optional free-text note per exercise, per session.
+- **Warm-up sets** — flag a set as a warm-up to exclude it from PRs,
+  best-weight, estimated 1RM, and muscle-volume counts.
+- **Quick-adjust buttons** — ±5 lb and ±1 rep taps on every set, no keyboard
+  needed.
+- **Exercise picker** — sorts your most recently logged exercises to the top,
+  and lets you edit an exercise's name/muscle tags in place (pencil icon).
+- **Workout history search** — filter past sessions by workout name, exercise
+  name, or date.
+- **Undo on delete** — deleting a workout, exercise library, template, cardio
+  activity, meal, or body weight entry shows a brief "Undo" toast.
 - **Progress tab** — three views: per-exercise charts (with an estimated
   1-rep-max and an optional weight goal with progress bar), a weekly
   sets-per-muscle-group breakdown, and body weight tracking with its own
