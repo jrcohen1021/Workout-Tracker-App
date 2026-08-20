@@ -32,8 +32,6 @@ running/hiking tracker. Built on Vite + React, persisted with Supabase
   for a target barbell weight.
 - **Previous-log pre-fill** — adding an exercise (directly or via a template)
   pre-fills its sets with what you logged last time.
-- **Streak + heatmap** — current workout streak and a 10-week activity
-  heatmap on the Workouts tab.
 - **Per-exercise notes** — optional free-text note per exercise, per session.
 - **Warm-up sets** — flag a set as a warm-up to exclude it from PRs,
   best-weight, estimated 1RM, and muscle-volume counts.
