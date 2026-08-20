@@ -92,19 +92,23 @@ appears in a saved session.
 { "calories": 2400, "protein": 180, "carbs": 250, "fat": 70 }
 ```
 
-## `cardio-log` — array (runs/hikes)
+## `cardio-log` — array
 
 ```json
 {
   "id": "string (unique)",
   "date": "YYYY-MM-DD",
-  "type": "Run | Hike",
+  "type": "Run | Hike | Walk | Bike | Swim",
   "name": "string, optional",
   "distance": "number (miles)",
   "duration": "number (seconds)",
   "elevationGain": "number (feet)"
 }
 ```
+
+Estimated calories burned per activity aren't stored — they're computed on the fly from a
+per-type MET value (`MET_BY_TYPE` in `src/App.jsx`) and your most recent `body-weight-log`
+entry (defaulting to 154 lbs if you haven't logged one).
 
 ## `workout-templates` — array
 

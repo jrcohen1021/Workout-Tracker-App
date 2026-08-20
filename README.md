@@ -64,6 +64,10 @@ running/hiking tracker. Built on Vite + React, persisted with Supabase
   trend chart.
 - **Cardio PRs** — fastest pace, longest distance, and most elevation gain
   flag with a trophy badge per activity type.
+- **Cardio activity types** — Run, Hike, Walk, Bike, and Swim.
+- **Cardio totals** — This Week and All Time stats for distance, elevation,
+  and estimated calories burned (MET-based estimate using your most recent
+  logged body weight).
 
 ## Setup
 

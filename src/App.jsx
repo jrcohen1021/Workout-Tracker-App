@@ -3,7 +3,8 @@ import {
   Dumbbell, TrendingUp, UtensilsCrossed, Plus, X,
   ChevronLeft, ChevronRight, Trash2, Settings, Check, Loader2, ChevronDown,
   ChevronUp, Pencil, Mountain, Footprints, Timer, Trophy, Calculator,
-  Bookmark, LayoutTemplate, Repeat, Target, Link2, Ruler
+  Bookmark, LayoutTemplate, Repeat, Target, Link2, Ruler,
+  Bike, Waves, PersonStanding
 } from "lucide-react";
 import {
   ComposedChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
@@ -356,7 +357,9 @@ export default function WorkoutFoodApp() {
             showUndo={showUndo}
           />
         )}
-        {activeTab === "cardio" && <CardioTab cardioLog={cardioLog} setCardioLog={persist.cardioLog} showUndo={showUndo} />}
+        {activeTab === "cardio" && (
+          <CardioTab cardioLog={cardioLog} setCardioLog={persist.cardioLog} bodyWeightLog={bodyWeightLog} showUndo={showUndo} />
+        )}
         {activeTab === "food" && (
           <FoodTab foodLog={foodLog} setFoodLog={persist.foodLog} targets={targets} setTargets={persist.targets} showUndo={showUndo} />
         )}
@@ -2230,7 +2233,24 @@ function LabeledInput({ label, value, onChange }) {
 
 // ---------- Cardio Tab ----------
 
-const CARDIO_TYPES = ["Run", "Hike"];
+const CARDIO_TYPES = ["Run", "Hike", "Walk", "Bike", "Swim"];
+const CARDIO_ICONS = { Run: Footprints, Hike: Mountain, Walk: PersonStanding, Bike: Bike, Swim: Waves };
+const MET_BY_TYPE = { Run: 9.8, Hike: 6, Walk: 3.5, Bike: 7.5, Swim: 6 };
+
+function getLatestBodyWeightLbs(bodyWeightLog) {
+  if (!bodyWeightLog || bodyWeightLog.length === 0) return null;
+  const sorted = bodyWeightLog
+    .slice()
+    .sort((a, b) => (a.date !== b.date ? (a.date > b.date ? 1 : -1) : (a.createdAt || 0) - (b.createdAt || 0)));
+  return sorted[sorted.length - 1].weight;
+}
+
+function estimateCalories(activity, weightLbs) {
+  const met = MET_BY_TYPE[activity.type] || 6;
+  const weightKg = (Number(weightLbs) || 154) * 0.453592;
+  const hours = (Number(activity.duration) || 0) / 3600;
+  return Math.round(met * weightKg * hours);
+}
 
 function formatDuration(sec) {
   sec = Math.round(sec || 0);
@@ -2251,7 +2271,7 @@ function formatPace(durationSec, distanceMi) {
   return `${m}:${String(s).padStart(2, "0")}/mi`;
 }
 
-function CardioTab({ cardioLog, setCardioLog, showUndo }) {
+function CardioTab({ cardioLog, setCardioLog, bodyWeightLog, showUndo }) {
   const [showAdd, setShowAdd] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const typesLogged = CARDIO_TYPES.filter((t) => cardioLog.some((a) => a.type === t));
@@ -2274,11 +2294,17 @@ function CardioTab({ cardioLog, setCardioLog, showUndo }) {
   };
 
   const sorted = cardioLog.slice().sort((a, b) => (a.date < b.date ? 1 : -1));
+  const latestBodyWeight = getLatestBodyWeightLbs(bodyWeightLog);
 
   const weekCutoff = Date.now() - 7 * 86400000;
   const weekActivities = cardioLog.filter((a) => new Date(a.date).getTime() >= weekCutoff);
   const weekDistance = weekActivities.reduce((s, a) => s + (Number(a.distance) || 0), 0);
   const weekElevation = weekActivities.reduce((s, a) => s + (Number(a.elevationGain) || 0), 0);
+  const weekCalories = weekActivities.reduce((s, a) => s + estimateCalories(a, latestBodyWeight), 0);
+
+  const allTimeDistance = cardioLog.reduce((s, a) => s + (Number(a.distance) || 0), 0);
+  const allTimeElevation = cardioLog.reduce((s, a) => s + (Number(a.elevationGain) || 0), 0);
+  const allTimeCalories = cardioLog.reduce((s, a) => s + estimateCalories(a, latestBodyWeight), 0);
 
   const chartData = sorted
     .filter((a) => a.type === chartType)
@@ -2299,9 +2325,22 @@ function CardioTab({ cardioLog, setCardioLog, showUndo }) {
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-2">
-        <StatCard label="This Week" value={weekDistance.toFixed(1)} sub="miles" color="#fb923c" />
-        <StatCard label="Elevation" value={Math.round(weekElevation)} sub="ft this wk" color="#fb923c" />
+      <div>
+        <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1.5">This Week</p>
+        <div className="grid grid-cols-3 gap-2">
+          <StatCard label="Distance" value={weekDistance.toFixed(1)} sub="miles" color="#fb923c" />
+          <StatCard label="Elevation" value={Math.round(weekElevation)} sub="ft gain" color="#fb923c" />
+          <StatCard label="Calories" value={weekCalories} sub="est. kcal" color="#fb923c" />
+        </div>
+      </div>
+
+      <div>
+        <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1.5">All Time</p>
+        <div className="grid grid-cols-3 gap-2">
+          <StatCard label="Distance" value={allTimeDistance.toFixed(1)} sub="miles" color="#fb923c" />
+          <StatCard label="Elevation" value={Math.round(allTimeElevation)} sub="ft gain" color="#fb923c" />
+          <StatCard label="Calories" value={allTimeCalories} sub="est. kcal" color="#fb923c" />
+        </div>
       </div>
 
       <button
@@ -2367,9 +2406,9 @@ function CardioTab({ cardioLog, setCardioLog, showUndo }) {
       )}
 
       <div className="space-y-2">
-        {sorted.length === 0 && <p className="text-slate-500 text-sm text-center pt-6">No runs or hikes logged yet.</p>}
+        {sorted.length === 0 && <p className="text-slate-500 text-sm text-center pt-6">No cardio activities logged yet.</p>}
         {sorted.map((a) => {
-          const Icon = a.type === "Hike" ? Mountain : Footprints;
+          const Icon = CARDIO_ICONS[a.type] || Footprints;
           const { bestPace, bestDistance, bestElevation } = getCardioBests(cardioLog, a.type, a.id);
           const pace = paceSecPerMile(a.duration, a.distance);
           const isPaceRecord = pace !== null && bestPace !== null && pace < bestPace;
@@ -2393,7 +2432,7 @@ function CardioTab({ cardioLog, setCardioLog, showUndo }) {
                   <button onClick={() => setConfirmDeleteId(a.id)} className="p-1.5 text-slate-500 active:text-red-400"><Trash2 size={16} /></button>
                 )}
               </div>
-              <div className="grid grid-cols-4 gap-1 mt-2.5 pt-2.5 border-t border-white/10 text-center">
+              <div className="grid grid-cols-5 gap-1 mt-2.5 pt-2.5 border-t border-white/10 text-center">
                 <div>
                   <p className="text-sm font-semibold text-slate-100 flex items-center justify-center gap-1">
                     {Number(a.distance).toFixed(2)}
@@ -2415,6 +2454,10 @@ function CardioTab({ cardioLog, setCardioLog, showUndo }) {
                     {isElevationRecord && <Trophy size={11} className="text-amber-400" title="Most elevation gain" />}
                   </p>
                   <p className="text-[10px] text-slate-500">ft gain</p>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-slate-100">{estimateCalories(a, latestBodyWeight)}</p>
+                  <p className="text-[10px] text-slate-500">est. cal</p>
                 </div>
               </div>
             </div>
@@ -2446,17 +2489,17 @@ function AddCardioSheet({ onAdd, onClose }) {
     <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/60" onClick={onClose}>
       <div className="bg-slate-900 border-t border-white/10 rounded-t-2xl w-full max-w-md p-4 space-y-3 max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
-          <p className="font-semibold">Log Run or Hike</p>
+          <p className="font-semibold">Log Activity</p>
           <button onClick={onClose} className="p-1 text-slate-500"><X size={20} /></button>
         </div>
 
         <div className="space-y-2.5">
-          <div className="flex gap-2">
+          <div className="grid grid-cols-3 gap-2">
             {CARDIO_TYPES.map((t) => (
               <button
                 key={t}
                 onClick={() => setForm({ ...form, type: t })}
-                className={`flex-1 py-2 rounded-lg text-sm font-medium border ${form.type === t ? "bg-orange-400 text-white border-orange-400" : "bg-white/5 border-white/15 text-slate-400"}`}
+                className={`py-2 rounded-lg text-sm font-medium border ${form.type === t ? "bg-orange-400 text-white border-orange-400" : "bg-white/5 border-white/15 text-slate-400"}`}
               >
                 {t}
               </button>
