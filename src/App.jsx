@@ -3,7 +3,7 @@ import {
   Dumbbell, TrendingUp, UtensilsCrossed, Plus, X,
   ChevronLeft, ChevronRight, Trash2, Settings, Check, Loader2, ChevronDown,
   ChevronUp, Pencil, Mountain, Footprints, Timer, Trophy, Calculator,
-  Bookmark, LayoutTemplate, Repeat, Flame, Target, Link2, Ruler
+  Bookmark, LayoutTemplate, Repeat, Target, Link2, Ruler
 } from "lucide-react";
 import {
   ComposedChart, Line, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
@@ -110,36 +110,6 @@ function estimate1RM(weight, reps) {
   const r = Number(reps) || 0;
   if (w <= 0 || r <= 0) return 0;
   return w * (1 + r / 30);
-}
-
-// ---------- Workout streak / heatmap ----------
-
-function computeStreak(sessions) {
-  const days = new Set(sessions.map((s) => s.date));
-  if (days.size === 0) return 0;
-  const cursor = new Date(todayStr() + "T00:00:00");
-  if (!days.has(todayStr())) cursor.setDate(cursor.getDate() - 1);
-  let streak = 0;
-  while (days.has(cursor.toISOString().slice(0, 10))) {
-    streak++;
-    cursor.setDate(cursor.getDate() - 1);
-  }
-  return streak;
-}
-
-function buildHeatmapDays(sessions, weeks) {
-  const counts = {};
-  sessions.forEach((s) => { counts[s.date] = (counts[s.date] || 0) + 1; });
-  const today = new Date(todayStr() + "T00:00:00");
-  const totalDays = weeks * 7;
-  const cells = [];
-  for (let i = totalDays - 1; i >= 0; i--) {
-    const d = new Date(today);
-    d.setDate(d.getDate() - i);
-    const dateStr = d.toISOString().slice(0, 10);
-    cells.push({ date: dateStr, count: counts[dateStr] || 0 });
-  }
-  return cells;
 }
 
 // ---------- Muscle group volume ----------
@@ -636,42 +606,8 @@ function WorkoutsTab({ exercises, setExercises, sessions, setSessions, templates
     );
   }
 
-  const streak = computeStreak(sessions);
-  const heatmapCells = buildHeatmapDays(sessions, 10);
-
   return (
     <div className="space-y-4">
-      {sessions.length > 0 && (
-        <div className="bg-slate-900 border border-white/10 rounded-xl p-3.5">
-          <div className="flex items-center justify-between mb-2.5">
-            <div className="flex items-center gap-1.5">
-              <Flame size={16} className={streak > 0 ? "text-amber-400" : "text-slate-600"} />
-              <p className="text-sm font-medium text-slate-100">
-                {streak > 0 ? `${streak} day streak` : "No active streak"}
-              </p>
-            </div>
-            <p className="text-[11px] text-slate-500">Last 10 weeks</p>
-          </div>
-          <div
-            className="grid gap-[3px]"
-            style={{ gridTemplateRows: "repeat(7, 1fr)", gridAutoFlow: "column", gridAutoColumns: "10px" }}
-          >
-            {heatmapCells.map((c) => (
-              <div
-                key={c.date}
-                title={`${c.date}: ${c.count} workout${c.count === 1 ? "" : "s"}`}
-                className="rounded-[2px]"
-                style={{
-                  width: 10,
-                  height: 10,
-                  backgroundColor: c.count === 0 ? "#1e293b" : c.count === 1 ? "#22d3ee80" : "#22d3ee",
-                }}
-              />
-            ))}
-          </div>
-        </div>
-      )}
-
       <div className="flex gap-2">
         <button
           onClick={startNew}
